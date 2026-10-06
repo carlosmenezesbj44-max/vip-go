@@ -755,7 +755,8 @@ app.delete('/api/activities/:id', authRequired, async (req, res) => {
 });
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Rota da API não encontrada.' }));
-app.use(express.static(root, { index: 'index.html', extensions: ['html'] }));
+const publicDirectory = isProduction ? resolve(root, 'dist') : root;
+app.use(express.static(publicDirectory, { index: 'index.html', extensions: ['html'] }));
 app.use((error, _req, res, _next) => {
   console.error(error);
   if (res.headersSent) return;

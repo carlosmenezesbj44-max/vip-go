@@ -1,4 +1,5 @@
 import { createMapsController } from './maps.js';
+import '../assets/vendor/leaflet/leaflet.css';
 
 const STORAGE_KEY = 'vip-go-activities-v1';
 const toast = document.getElementById('toast');
