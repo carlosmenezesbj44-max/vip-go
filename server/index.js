@@ -28,6 +28,7 @@ if (isProduction && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.l
 }
 
 app.disable('x-powered-by');
+if (isProduction) app.set('trust proxy', 1);
 app.use(express.json({ limit: '70mb' }));
 app.use(session({
   name: 'vipgo.sid',

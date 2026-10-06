@@ -4,7 +4,7 @@ MVP de campanha corporativa de atividade física, com registro manual, percursos
 
 ## Executar localmente
 
-Requisitos: Node.js 20.19+ ou 22.12+ e npm.
+Requisitos: Node.js 22+ e npm.
 
 ```bash
 npm install
