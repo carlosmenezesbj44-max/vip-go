@@ -925,9 +925,47 @@ function renderCampaign(data) {
     document.getElementById('adminGoal').value = campaign.weeklyGoalMinutes;
     document.getElementById('adminReward').value = campaign.rewardText;
     document.getElementById('adminPeriod').value = campaign.periodType;
+    document.getElementById('adminCreateAdminForm').hidden = !data.admin.canManageAdmins;
+    document.getElementById('adminAdminsReadOnly').hidden = data.admin.canManageAdmins;
     renderAdminTeams(data.admin.teams);
     renderAdminChallenges(data.admin.challenges || []);
+    renderAdminAdmins(data.admin.admins || []);
   }
+}
+
+function renderAdminAdmins(admins = []) {
+  const list = document.getElementById('adminAdminsList');
+  list.replaceChildren();
+  document.getElementById('adminAdminCount').textContent = String(admins.length);
+  if (!admins.length) {
+    const empty = document.createElement('p');
+    empty.className = 'activity-empty';
+    empty.textContent = 'Nenhum administrador cadastrado.';
+    list.append(empty);
+    return;
+  }
+  admins.forEach((admin) => {
+    const row = document.createElement('div');
+    row.className = 'admin-team-row';
+    const entry = document.createElement('div');
+    entry.className = 'admin-admin-entry';
+    const copy = document.createElement('div');
+    copy.className = 'admin-admin-entry-copy';
+    const name = document.createElement('strong');
+    name.textContent = admin.name;
+    const email = document.createElement('span');
+    email.textContent = admin.email;
+    copy.append(name, email);
+    entry.append(copy);
+    row.append(entry);
+    if (admin.isPrimary) {
+      const badge = document.createElement('span');
+      badge.className = 'admin-primary-badge';
+      badge.textContent = 'Principal';
+      row.append(badge);
+    }
+    list.append(row);
+  });
 }
 
 function renderAdminTeams(teams = []) {
@@ -1456,6 +1494,29 @@ document.getElementById('adminCreateTeam').addEventListener('click', async () =>
     await refreshCampaign();
     showToast(`Equipe ${teams.find((team) => team.id === user.teamId)?.name || ''} criada.`);
   } catch (error) { showToast(error.message); }
+});
+
+document.getElementById('adminCreateAdminForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submit = form.querySelector('button[type="submit"]');
+  const error = document.getElementById('adminCreateAdminError');
+  const fields = new FormData(form);
+  error.hidden = true;
+  submit.disabled = true;
+  try {
+    const result = await api('/admin/admins', { method: 'POST', body: JSON.stringify({
+      name: fields.get('name'),
+      email: fields.get('email'),
+      password: fields.get('password'),
+    }) });
+    form.reset();
+    await loadAccountData();
+    showToast(result.createdAccount ? 'Conta e acesso administrativo criados.' : result.added ? 'Participante promovido a administrador.' : 'Essa pessoa já é administradora.');
+  } catch (requestError) {
+    error.textContent = requestError.message;
+    error.hidden = false;
+  } finally { submit.disabled = false; }
 });
 
 document.getElementById('saveCampaignSettings').addEventListener('click', async () => {

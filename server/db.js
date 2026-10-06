@@ -55,6 +55,12 @@ database.exec(`
     starts_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ends_at TEXT
   );
+  CREATE TABLE IF NOT EXISTS campaign_admins (
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (campaign_id, user_id)
+  );
   CREATE TABLE IF NOT EXISTS teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -166,10 +172,12 @@ database.prepare(`UPDATE campaigns SET admin_user_id = (
 ) WHERE company_id = ? AND admin_user_id IS NULL AND EXISTS (
   SELECT 1 FROM users WHERE company_id = campaigns.company_id
 )`).run(defaultCompany.id);
+database.prepare('INSERT OR IGNORE INTO campaign_admins (campaign_id, user_id) SELECT id, admin_user_id FROM campaigns WHERE admin_user_id IS NOT NULL').run();
 
 export const statements = {
   createUser: database.prepare('INSERT INTO users (name, email, password_hash, company_id) VALUES (@name, @email, @passwordHash, @companyId)'),
   userByEmail: database.prepare('SELECT id, name, email, password_hash FROM users WHERE email = ? COLLATE NOCASE'),
+  userAccountByEmail: database.prepare('SELECT id, name, email, company_id AS companyId FROM users WHERE email = ? COLLATE NOCASE'),
   publicUserById: database.prepare('SELECT u.id, u.name, u.email, u.created_at AS createdAt, u.company_id AS companyId, c.name AS companyName, u.team_id AS teamId, t.name AS teamName, u.show_in_ranking AS showInRanking, u.share_activities AS shareActivities, u.profile_photo AS profilePhoto, u.share_profile_photo AS shareProfilePhoto FROM users u LEFT JOIN companies c ON c.id = u.company_id LEFT JOIN teams t ON t.id = u.team_id WHERE u.id = ?'),
   companyByCode: database.prepare('SELECT id, name, join_code AS joinCode FROM companies WHERE join_code = ? COLLATE NOCASE'),
   companyById: database.prepare('SELECT id, name, join_code AS joinCode FROM companies WHERE id = ?'),
@@ -184,6 +192,9 @@ export const statements = {
   updatePrivacy: database.prepare('UPDATE users SET show_in_ranking = ?, share_activities = ?, share_profile_photo = ? WHERE id = ?'),
   updateProfilePhoto: database.prepare('UPDATE users SET profile_photo = ? WHERE id = ?'),
   campaignByCompany: database.prepare('SELECT id, name, weekly_goal_minutes AS weeklyGoalMinutes, reward_text AS rewardText, period_type AS periodType, admin_user_id AS adminUserId, starts_at AS startsAt, ends_at AS endsAt FROM campaigns WHERE company_id = ? ORDER BY id DESC LIMIT 1'),
+  isCampaignAdmin: database.prepare('SELECT 1 AS isAdmin FROM campaign_admins WHERE campaign_id = ? AND user_id = ?'),
+  campaignAdmins: database.prepare('SELECT u.id, u.name, u.email, (c.admin_user_id = u.id) AS isPrimary FROM campaign_admins ca JOIN users u ON u.id = ca.user_id JOIN campaigns c ON c.id = ca.campaign_id WHERE ca.campaign_id = ? ORDER BY isPrimary DESC, u.name COLLATE NOCASE'),
+  addCampaignAdmin: database.prepare('INSERT OR IGNORE INTO campaign_admins (campaign_id, user_id) VALUES (?, ?)'),
   updateCampaign: database.prepare('UPDATE campaigns SET name = ?, weekly_goal_minutes = ?, reward_text = ?, period_type = ? WHERE id = ?'),
   claimCampaignAdmin: database.prepare('UPDATE campaigns SET admin_user_id = ? WHERE company_id = ? AND admin_user_id IS NULL'),
   companySummary: database.prepare('SELECT COUNT(*) AS participantCount, SUM(CASE WHEN show_in_ranking = 1 THEN 1 ELSE 0 END) AS visibleParticipantCount, COUNT(DISTINCT team_id) AS teamCount FROM users WHERE company_id = ?'),

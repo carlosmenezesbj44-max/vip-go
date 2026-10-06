@@ -52,7 +52,7 @@ function publicUser(id) {
 function campaignAdminRequired(req, res, next) {
   const user = publicUser(req.session.userId);
   const campaign = user?.companyId ? statements.campaignByCompany.get(user.companyId) : null;
-  if (!campaign || campaign.adminUserId !== user.id) return res.status(403).json({ error: 'Esta ação é exclusiva da administração da campanha.' });
+  if (!campaign || (campaign.adminUserId !== user.id && !statements.isCampaignAdmin.get(campaign.id, user.id))) return res.status(403).json({ error: 'Esta ação é exclusiva da administração da campanha.' });
   req.adminUser = user;
   req.adminCampaign = campaign;
   next();
@@ -272,7 +272,7 @@ app.get('/api/campaign', authRequired, (req, res) => {
     current.participants += 1;
     teamTotals.set(row.teamId, current);
   });
-  const isCampaignAdmin = campaign.adminUserId === user.id;
+  const isCampaignAdmin = campaign.adminUserId === user.id || Boolean(statements.isCampaignAdmin.get(campaign.id, user.id));
   const totalSeconds = rows.filter((row) => row.userId === user.id).reduce((sum, row) => sum + row.durationSeconds, 0);
   const lifetime = statements.userLifetime.get(user.id);
   const badges = [];
@@ -285,6 +285,8 @@ app.get('/api/campaign', authRequired, (req, res) => {
     summary: statements.companySummary.get(user.companyId),
     teams: statements.teamsForCompany.all(user.companyId),
     challenges: statements.challengesForCampaign.all(campaign.id),
+    admins: statements.campaignAdmins.all(campaign.id),
+    canManageAdmins: campaign.adminUserId === user.id,
   } : null;
   const challenges = statements.challengesForCampaign.all(campaign.id).map((challenge) => {
     const participation = statements.acceptedChallenge.get(challenge.id, user.id);
@@ -532,6 +534,39 @@ app.post('/api/teams', authRequired, (req, res) => {
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'Já existe uma equipe com esse nome.' });
     res.status(500).json({ error: 'Não foi possível criar a equipe.' });
   }
+});
+
+app.post('/api/admin/admins', authRequired, campaignAdminRequired, async (req, res, next) => {
+  try {
+    if (req.adminCampaign.adminUserId !== req.adminUser.id) return res.status(403).json({ error: 'Somente o administrador principal pode gerenciar outros administradores.' });
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (name.length < 2 || name.length > 60) return res.status(400).json({ error: 'Informe um nome entre 2 e 60 caracteres.' });
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail válido.' });
+
+    const existing = statements.userAccountByEmail.get(email);
+    let userId;
+    let createdAccount = false;
+    if (existing) {
+      if (existing.companyId !== req.adminUser.companyId) return res.status(409).json({ error: 'Esse e-mail já pertence a uma conta de outra empresa.' });
+      userId = existing.id;
+    } else {
+      if (password.length < 8 || password.length > 128) return res.status(400).json({ error: 'Para uma nova conta, informe uma senha entre 8 e 128 caracteres.' });
+      const passwordHash = await bcrypt.hash(password, 12);
+      try {
+        const result = statements.createUser.run({ name, email, passwordHash, companyId: req.adminUser.companyId });
+        userId = Number(result.lastInsertRowid);
+        createdAccount = true;
+      } catch (error) {
+        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'Já existe uma conta com esse e-mail.' });
+        throw error;
+      }
+    }
+
+    const added = statements.addCampaignAdmin.run(req.adminCampaign.id, userId).changes > 0;
+    res.status(createdAccount ? 201 : 200).json({ createdAccount, added, admins: statements.campaignAdmins.all(req.adminCampaign.id) });
+  } catch (error) { next(error); }
 });
 
 app.put('/api/admin/campaign', authRequired, campaignAdminRequired, (req, res) => {
