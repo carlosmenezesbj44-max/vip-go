@@ -757,6 +757,14 @@ app.delete('/api/activities/:id', authRequired, async (req, res) => {
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Rota da API não encontrada.' }));
 const publicDirectory = isProduction ? resolve(root, 'dist') : root;
+app.get(['/', '/index.html'], (req, res) => {
+  const user = req.session.userId ? publicUser(req.session.userId) : null;
+  if (!user) {
+    if (req.session.userId) req.session.destroy(() => {});
+    return res.redirect(302, '/login.html');
+  }
+  res.sendFile(resolve(publicDirectory, 'index.html'));
+});
 app.use(express.static(publicDirectory, { index: 'index.html', extensions: ['html'] }));
 app.use((error, _req, res, _next) => {
   console.error(error);
