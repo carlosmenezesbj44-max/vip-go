@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { database, statements } from './db.js';
 import { SQLiteSessionStore } from './session-store.js';
 
@@ -24,6 +25,8 @@ const activityTypes = new Set([
   'Futsal', 'Basquete', 'Vôlei', 'Tênis', 'Beach tennis', 'Remo', 'Ciclismo indoor', 'Spinning',
   'Elíptico', 'Escada', 'Alongamento', 'Artes marciais', 'Outro',
 ]);
+let valhallaProcess;
+let shuttingDown = false;
 if (isProduction && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
   throw new Error('Defina SESSION_SECRET com pelo menos 32 caracteres antes de iniciar em produção.');
 }
@@ -116,6 +119,63 @@ function maskSharedRoute(route, edgeMeters = 200) {
     .map(({ lat, lng }) => ({ lat: Number(lat.toFixed(5)), lng: Number(lng.toFixed(5)) }));
 }
 
+function decodePolyline6(encoded) {
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  const points = [];
+  while (index < encoded.length) {
+    const readValue = () => {
+      let result = 0;
+      let shift = 0;
+      let value;
+      do {
+        value = encoded.charCodeAt(index++) - 63;
+        result |= (value & 0x1f) << shift;
+        shift += 5;
+      } while (value >= 0x20 && index <= encoded.length);
+      return result & 1 ? ~(result >> 1) : result >> 1;
+    };
+    lat += readValue();
+    lng += readValue();
+    points.push({ lat: lat / 1e6, lng: lng / 1e6 });
+  }
+  return points;
+}
+
+function evenlySampleRoute(route, limit = 100) {
+  if (route.length <= limit) return route;
+  return Array.from({ length: limit }, (_value, index) => route[Math.round(index * (route.length - 1) / (limit - 1))]);
+}
+
+async function matchGpsRoute(route, mode) {
+  if (route.length < 3 || !process.env.VALHALLA_URL) return [];
+  const locations = evenlySampleRoute(route).map(({ lat, lng }, index, all) => ({ lat, lon: lng, ...(index > 0 && index < all.length - 1 ? { type: 'through' } : {}) }));
+  const costing = mode === 'Ciclismo' ? 'bicycle' : 'pedestrian';
+  try {
+    const response = await fetch(`${process.env.VALHALLA_URL.replace(/\/$/, '')}/trace_route`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ costing, shape: locations, shape_match: 'map_snap', shape_format: 'polyline6',
+        trace_options: { gps_accuracy: 20, search_radius: 80, breakage_distance: 1200, interpolation_distance: 10, turn_penalty_factor: 200 },
+        directions_options: { units: 'kilometers', language: 'pt-BR' },
+      }),
+      signal: AbortSignal.timeout(25000),
+    });
+    if (!response.ok) throw new Error(`Valhalla returned ${response.status}`);
+    const result = await response.json();
+    const matched = (result.trip?.legs || []).flatMap((leg) => typeof leg.shape === 'string' ? decodePolyline6(leg.shape) : []);
+    if (matched.length < 2) return [];
+    const rawMeters = route.slice(1).reduce((total, point, index) => total + routeDistanceMeters(route[index], point), 0);
+    const matchedMeters = matched.slice(1).reduce((total, point, index) => total + routeDistanceMeters(matched[index], point), 0);
+    if (!rawMeters || matchedMeters < rawMeters * 0.35 || matchedMeters > rawMeters * 2.5) return [];
+    return matched;
+  } catch (error) {
+    console.warn('Map matching unavailable; preserving the original GPS trace:', error.message);
+    return [];
+  }
+}
+
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 app.post('/api/auth/register', async (req, res, next) => {
   try {
@@ -168,16 +228,19 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/activities', authRequired, (req, res) => {
-  const activities = statements.listActivities.all(req.session.userId).map(({ routeJson, mediaJson, ...activity }) => ({ ...activity, media: JSON.parse(mediaJson || '[]'), route: JSON.parse(routeJson || '[]') }));
+  const activities = statements.listActivities.all(req.session.userId).map(({ routeJson, matchedRouteJson, mediaJson, ...activity }) => {
+    const matchedRoute = JSON.parse(matchedRouteJson || '[]');
+    return { ...activity, media: JSON.parse(mediaJson || '[]'), routeMatched: matchedRoute.length >= 2, route: matchedRoute.length >= 2 ? matchedRoute : JSON.parse(routeJson || '[]') };
+  });
   res.json({ activities });
 });
 
 app.get('/api/maps/routes', authRequired, (req, res) => {
   const user = publicUser(req.session.userId);
   if (!user?.companyId) return res.json({ routes: [] });
-  const routes = statements.mapRoutesForCompany.all(user.companyId, user.id).flatMap(({ routeJson, ...activity }) => {
+  const routes = statements.mapRoutesForCompany.all(user.companyId, user.id).flatMap(({ routeJson, matchedRouteJson, ...activity }) => {
     const route = maskSharedRoute(JSON.parse(routeJson || '[]'));
-    return route.length >= 2 ? [{ ...activity, route }] : [];
+    return route.length >= 2 ? [{ ...activity, routeMatched: JSON.parse(matchedRouteJson || '[]').length >= 2, route }] : [];
   });
   res.json({ routes });
 });
@@ -713,6 +776,7 @@ app.post('/api/activities', authRequired, async (req, res) => {
       averageHeartRate: req.body.averageHeartRate || null,
       maxHeartRate: req.body.maxHeartRate || null,
       routeJson: JSON.stringify(req.body.route || []),
+      matchedRouteJson: JSON.stringify(await matchGpsRoute(req.body.route || [], req.body.mode)),
       shareRoute: req.body.shareRoute === true ? 1 : 0,
       mediaJson: JSON.stringify(media),
     });
@@ -808,6 +872,46 @@ app.use((error, _req, res, _next) => {
 });
 
 const server = app.listen(port, host, () => console.log(`VIP Go em http://${host}:${port}`));
+function startValhalla() {
+  if (!process.env.VALHALLA_BIN || !process.env.VALHALLA_CONFIG || shuttingDown) return;
+  valhallaProcess = spawn(process.env.VALHALLA_BIN, [process.env.VALHALLA_CONFIG, process.env.VALHALLA_CONCURRENCY || '2'], {
+    stdio: 'ignore',
+    env: { ...process.env, PATH: `${dirname(process.env.VALHALLA_BIN)}:${process.env.PATH || ''}` },
+  });
+  valhallaProcess.on('error', (error) => console.error('Não foi possível iniciar o serviço local de mapas:', error.message));
+  valhallaProcess.on('exit', (code, signal) => {
+    valhallaProcess = null;
+    if (shuttingDown) return;
+    console.error(`Serviço local de mapas encerrou (${signal || code}); nova tentativa em 5 segundos.`);
+    setTimeout(startValhalla, 5000).unref();
+  });
+}
+startValhalla();
+async function rematchStoredRoutes() {
+  if (!process.env.VALHALLA_URL) return;
+  for (let attempt = 0; attempt < 60 && !shuttingDown; attempt += 1) {
+    try {
+      const health = await fetch(`${process.env.VALHALLA_URL.replace(/\/$/, '')}/status`, { signal: AbortSignal.timeout(1500) });
+      if (health.ok) break;
+    } catch { /* Wait until the local routing process finishes loading its tiles. */ }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  if (shuttingDown) return;
+  try {
+    const health = await fetch(`${process.env.VALHALLA_URL.replace(/\/$/, '')}/status`, { signal: AbortSignal.timeout(1500) });
+    if (!health.ok) return;
+  } catch { return; }
+  const pending = statements.activitiesNeedingMatch.all();
+  for (const activity of pending) {
+    if (shuttingDown) return;
+    const route = await matchGpsRoute(JSON.parse(activity.routeJson || '[]'), activity.mode);
+    if (route.length >= 2) statements.saveMatchedRoute.run(JSON.stringify(route), activity.id);
+  }
+  if (pending.length) console.log(`Percursos GPS ajustados às ruas: ${pending.length}.`);
+}
+setTimeout(() => { void rematchStoredRoutes(); }, 1000).unref();
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
+  shuttingDown = true;
+  valhallaProcess?.kill('SIGTERM');
   server.close(() => { sessionStore.close(); database.close(); process.exit(0); });
 });

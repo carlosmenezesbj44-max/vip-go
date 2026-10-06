@@ -323,12 +323,12 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     updateStats();
   }
 
-  function showRoute(route, type, id) {
+  function showRoute(route, type, id, isRoadMatched = false) {
     ensureMap();
     if (!map || !Array.isArray(route) || route.length < 2) return;
     selected = { type, id };
     shownRoute.setStyle({ color: type === 'mine' ? '#00bca2' : '#fa8b45' });
-    shownRoute.setLatLngs(smoothRouteForDisplay(route).map((point) => [point.lat, point.lng]));
+    shownRoute.setLatLngs((isRoadMatched ? route : smoothRouteForDisplay(route)).map((point) => [point.lat, point.lng]));
     map.fitBounds(shownRoute.getBounds(), { padding: [35, 35], maxZoom: 16 });
     document.querySelectorAll('.map-route-row').forEach((row) => row.classList.toggle('selected', row.dataset.routeId === String(id) && row.dataset.routeType === type));
   }
@@ -347,7 +347,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(activity.startedAt));
     detail.textContent = `${date} · ${activity.distanceKm > 0 ? `${Number(activity.distanceKm).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} km` : elapsedText(Math.floor(activity.durationSeconds))}`;
     routeButton.append(title, detail);
-    routeButton.addEventListener('click', () => showRoute(activity.route, type, activity.id));
+    routeButton.addEventListener('click', () => showRoute(activity.route, type, activity.id, activity.routeMatched));
     row.append(routeButton);
     if (type === 'mine') {
       const visibility = document.createElement('button');
