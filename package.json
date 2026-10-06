@@ -1,0 +1,22 @@
+{
+  "name": "vip-go",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.js",
+    "dev:frontend": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "node server/index.js"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "leaflet": "^1.9.4"
+  }
+}

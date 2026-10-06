@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#06251f">
+  <meta name="description" content="Entre ou crie sua conta VIP Go para acompanhar atividades e comunidades.">
+  <title>Entrar — VIP Go</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/login.css">
+</head>
+<body class="login-page">
+  <a href="/" class="login-back">← Voltar ao app</a>
+  <main class="login-shell">
+    <div class="login-glow" aria-hidden="true"></div>
+    <a class="login-brand" href="/" aria-label="VIP Go início"><img src="./assets/vip-go-logo-transparent.png" alt="VIP Go"></a>
+    <div class="login-form-wrap">
+      <span class="login-eyebrow" id="formEyebrow">BEM-VINDO DE VOLTA</span>
+      <h1 id="formTitle">Entre na sua conta</h1>
+      <div class="login-tabs" role="tablist" aria-label="Entrar ou criar conta">
+        <button class="login-tab is-active" type="button" data-mode="login" role="tab" aria-selected="true">Entrar</button>
+        <button class="login-tab" type="button" data-mode="register" role="tab" aria-selected="false">Criar conta</button>
+      </div>
+      <form id="loginForm" novalidate>
+        <label id="nameField" hidden>Seu nome<input name="name" autocomplete="name" maxlength="60" placeholder="Seu nome"></label>
+        <label id="companyCodeField" hidden>Código da empresa (opcional)<input name="companyCode" maxlength="40" placeholder="Ex.: VIPGO2026"></label>
+        <label>E-mail<input name="email" type="email" required maxlength="254" autocomplete="email" placeholder="voce@exemplo.com"></label>
+        <label>Senha<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="Sua senha"></label>
+        <p id="loginError" class="login-error" role="alert" hidden></p>
+        <button id="loginSubmit" class="login-submit" type="submit">Entrar</button>
+      </form>
+      <p class="login-tagline">MOVIMENTE-SE JUNTO</p>
+    </div>
+  </main>
+  <script type="module" src="./src/login.js"></script>
+</body>
+</html>
