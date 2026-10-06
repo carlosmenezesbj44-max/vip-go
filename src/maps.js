@@ -20,6 +20,16 @@ function metersBetween(a, b) {
   return 12742000 * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 
+function smoothRouteForDisplay(route) {
+  if (!Array.isArray(route) || route.length < 3) return route || [];
+  const median = (values) => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
+  return route.map((point, index) => {
+    if (index === 0 || index === route.length - 1) return point;
+    const window = route.slice(index - 1, index + 2);
+    return { ...point, lat: median(window.map((entry) => entry.lat)), lng: median(window.map((entry) => entry.lng)) };
+  });
+}
+
 function elapsedText(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -318,7 +328,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     if (!map || !Array.isArray(route) || route.length < 2) return;
     selected = { type, id };
     shownRoute.setStyle({ color: type === 'mine' ? '#00bca2' : '#fa8b45' });
-    shownRoute.setLatLngs(route.map((point) => [point.lat, point.lng]));
+    shownRoute.setLatLngs(smoothRouteForDisplay(route).map((point) => [point.lat, point.lng]));
     map.fitBounds(shownRoute.getBounds(), { padding: [35, 35], maxZoom: 16 });
     document.querySelectorAll('.map-route-row').forEach((row) => row.classList.toggle('selected', row.dataset.routeId === String(id) && row.dataset.routeType === type));
   }
@@ -406,7 +416,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   function onPosition(position) {
     const { latitude: lat, longitude: lng, accuracy } = position.coords;
     $('mapAccuracy').textContent = `${Math.round(accuracy)} m`;
-    if (accuracy > 100) { status('Aguardando um sinal de GPS mais preciso (até 100 m)…'); return; }
+    if (accuracy > 50) { status('Aguardando um sinal de GPS mais preciso (até 50 m)…'); return; }
     const point = { lat, lng, t: Math.max(Date.now(), points.at(-1)?.t || 0) };
     if (!startedAt) {
       startedAt = point.t;
@@ -420,7 +430,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       meters += delta;
     }
     points.push(point);
-    liveRoute.setLatLngs(points.map((entry) => [entry.lat, entry.lng]));
+    liveRoute.setLatLngs(smoothRouteForDisplay(points).map((entry) => [entry.lat, entry.lng]));
     if (locationMarker) locationMarker.setLatLng([lat, lng]);
     else locationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#00d9bc', fillOpacity: 1 }).addTo(map);
     map.panTo([lat, lng]);
