@@ -15,6 +15,7 @@ const uploadsDirectory = resolve(here, 'uploads');
 const app = express();
 const sessionStore = new SQLiteSessionStore();
 const port = Number(process.env.PORT || 5173);
+const host = process.env.HOST || '0.0.0.0';
 const isProduction = process.env.NODE_ENV === 'production';
 const secureCookies = process.env.COOKIE_SECURE === 'true' || (isProduction && process.env.COOKIE_SECURE !== 'false');
 const activityTypes = new Set([
@@ -763,7 +764,7 @@ app.use((error, _req, res, _next) => {
   res.status(500).json({ error: 'Ocorreu um erro no servidor.' });
 });
 
-const server = app.listen(port, '0.0.0.0', () => console.log(`VIP Go em http://localhost:${port}`));
+const server = app.listen(port, host, () => console.log(`VIP Go em http://${host}:${port}`));
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   server.close(() => { sessionStore.close(); database.close(); process.exit(0); });
 });
