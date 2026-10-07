@@ -1217,3 +1217,13 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 .activity-route-runner{width:36px!important;height:45px!important;background:none!important;border:0!important;box-shadow:none!important}
 .activity-route-runner .runner-svg{width:36px;height:45px;transform:none;filter:drop-shadow(0 1px 1px #ffffff90);overflow:visible}
 .activity-route-runner .runner-svg g{animation:none;stroke-linecap:round;stroke-linejoin:round}
+.activity-action-menu-toggle{display:none}
+@media(max-width:720px){
+ .activity-actions{position:relative;display:flex;align-items:center;justify-content:flex-start;padding-left:49px}
+ .activity-action-menu-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:94px;border-color:#bfe9d3;background:#e7f8ee;color:#087c68;font-weight:800}
+ .activity-actions:not(.is-menu-open) .activity-action:not(.activity-action-menu-toggle){display:none}
+ .activity-actions.is-menu-open{flex-wrap:wrap;row-gap:7px}
+ .activity-actions.is-menu-open .activity-action-menu-toggle{flex-basis:auto}
+ .activity-actions.is-menu-open .activity-action:not(.activity-action-menu-toggle){display:inline-flex;align-items:center;justify-content:center}
+}
+@media(max-width:380px){.activity-actions{padding-left:43px}}
