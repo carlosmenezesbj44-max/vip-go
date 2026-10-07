@@ -789,3 +789,82 @@ body[data-page="Início"] .welcome p{font-size:13px}
   .mobile-nav button:focus-visible{outline:2px solid var(--lime);outline-offset:-2px}
   .toast{bottom:calc(var(--mobile-nav-content-height) + 12px + env(safe-area-inset-bottom));z-index:60}
 }
+
+/* Shared premium form language for the rest of the app. */
+.premium-form{--form-ink:#173d32;--form-muted:#708d7f;--form-line:#d6e9df;--form-accent:#078d78;color:var(--form-ink)}
+.premium-form :is(label:not(.sr-only),.activity-media-title){color:#3d5e50;font-size:11px;font-weight:800;letter-spacing:.01em}
+.premium-form :is(input:not([type=checkbox]):not([type=file]),select,textarea){width:100%;min-height:44px;border:1px solid var(--form-line);border-radius:12px;background:#fbfefc;color:#173d32;padding:11px 13px;font:500 13px 'DM Sans',sans-serif;transition:border-color .18s,box-shadow .18s,background .18s}
+.premium-form :is(input,select,textarea):focus-visible{outline:none;border-color:#37c7a2;background:#fff;box-shadow:0 0 0 4px #37c7a21c}
+.premium-form :is(input,select,textarea):disabled{background:#edf4ef;color:#879a8f;cursor:not-allowed}
+.premium-form :is(input[type=checkbox],input[type=radio]){accent-color:#078d78}
+.premium-form :is(button,.activity-upload-button){min-height:42px;transition:transform .16s,box-shadow .16s,background .16s,border-color .16s}
+.premium-form button:focus-visible,.premium-form .activity-upload-button:focus-visible{outline:3px solid #42d4ae;outline-offset:3px}
+.premium-form .form-row{gap:14px}
+.premium-form .subtle,.premium-form>p,.premium-form small{line-height:1.55}
+.community-create-card form.premium-form{display:grid;gap:4px;padding-top:7px}
+.community-create-card form.premium-form label{display:grid;gap:4px;margin:8px 0}
+.community-create-card form.premium-form button{width:100%;margin-top:5px}
+.community-composer.premium-form{box-shadow:inset 0 1px #fff,0 10px 24px #0a3b2d0a;background:linear-gradient(145deg,#f9fdfb,#f1faf5);padding:16px}
+.community-composer.premium-form textarea{min-height:116px;border:1px solid #dcece2;border-radius:12px;background:#fff;padding:13px;line-height:1.55}
+.community-composer.premium-form textarea:focus{outline:none;border-color:#37c7a2;box-shadow:0 0 0 4px #37c7a21c}
+.community-photo-button,.profile-photo-upload,.map-media-button{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 13px!important;border:1px solid #c7e6d7!important;border-radius:11px!important;background:#fff!important;color:#087c68!important;font-size:11px!important;font-weight:800!important;cursor:pointer}
+.community-photo-button:hover,.profile-photo-upload:hover,.map-media-button:hover{background:#eaf8f1!important;border-color:#72c7a5!important}
+.profile-settings .workspace-panel{padding-top:8px}
+.profile-photo-settings{padding:18px;border:1px solid #dcece3;border-radius:16px;background:linear-gradient(145deg,#fbfefc,#f2faf5)}
+.profile-photo-settings .privacy-toggle{margin-top:15px}
+.profile-settings .privacy-toggle{padding:14px 15px;margin:11px 0;border:1px solid #dcece3;border-radius:13px;background:#fbfefc;transition:border-color .18s,background .18s}
+.profile-settings .privacy-toggle:focus-within{border-color:#85d7b5;background:#f3fbf6}
+.profile-settings .privacy-toggle strong{color:#244c3c;font:700 12px 'Manrope',sans-serif}
+.profile-settings .privacy-toggle small{font-size:11px;line-height:1.5}
+.join-company.premium-form,.team-settings.premium-form{padding:20px;border:1px solid #dcece3;border-radius:16px;background:linear-gradient(145deg,#fbfefc,#f2faf5)}
+.join-company.premium-form h3,.team-settings.premium-form h3{margin:0 0 5px;color:#173d32;font:800 16px 'Manrope'}
+.join-company.premium-form>.subtle,.team-settings.premium-form>.subtle{margin:0 0 15px;color:#718b7f;font-size:12px}
+.join-company.premium-form .inline-form,.team-settings.premium-form .inline-form{align-items:stretch;gap:10px}
+.join-company.premium-form .inline-form input,.team-settings.premium-form .inline-form input{min-width:0}
+.admin-config.premium-form,.admin-teams.premium-form,.admin-admins{border:1px solid #dcece3;border-radius:18px;background:linear-gradient(145deg,#fff,#f6fbf8);box-shadow:0 12px 30px #062b1e12}
+.admin-config.premium-form .goal-heading,.admin-teams.premium-form .goal-heading{padding-bottom:16px;border-bottom:1px solid #e2eee7;margin-bottom:14px}
+.admin-config.premium-form label,.admin-teams.premium-form label,.admin-admins label{color:#466354;font-size:11px}
+.admin-create-admin-form.premium-form{margin-top:17px;padding:18px;border:1px solid #dcece3;border-radius:15px;background:#f6fbf8;gap:12px}
+.admin-create-admin-form.premium-form .admin-admin-help{font-size:11px;line-height:1.55}
+.admin-create-admin-form.premium-form .create-goal,.admin-config.premium-form .create-goal,.admin-teams.premium-form .create-goal,.join-company.premium-form .create-goal,.team-settings.premium-form .create-goal{background:linear-gradient(105deg,#6fe8c9,#35d4ad);color:#07372b;border-radius:11px;padding:12px 16px;font-size:11px;box-shadow:0 8px 20px #18a9821e}
+.admin-create-admin-form.premium-form .create-goal:hover,.admin-config.premium-form .create-goal:hover,.admin-teams.premium-form .create-goal:hover,.join-company.premium-form .create-goal:hover,.team-settings.premium-form .create-goal:hover{background:linear-gradient(105deg,#83efd4,#43dfb8);transform:translateY(-1px);box-shadow:0 11px 22px #18a9822b}
+.map-finish.premium-form{border:1px solid #cce8d9;border-radius:18px;background:linear-gradient(145deg,#f9fdfb,#eff9f3);box-shadow:0 16px 36px #05281b1a}
+.map-finish.premium-form h2{color:#173d32;font-size:21px}
+.map-finish.premium-form>p{color:#6a8678;font-size:12px;line-height:1.55}
+.map-finish.premium-form select{width:min(100%,420px);min-height:46px;border-color:#d5e8dc;border-radius:12px;background:#fff;font:500 13px 'DM Sans'}
+.map-finish.premium-form .map-share-choice{padding:14px;border:1px solid #d8eae0;border-radius:13px;background:#fff;line-height:1.55}
+.map-finish.premium-form .map-share-choice small{font-size:11px;line-height:1.5;color:#718b7f}
+.activity-dialog.premium-form{border:1px solid #cde8da;background:#f7fcf9;box-shadow:0 28px 90px #001c12a6}
+.activity-dialog form.premium-form{padding:26px}
+.activity-dialog .premium-form .auth-description{padding:12px 14px;border:1px solid #deeee5;border-radius:12px;background:#f0f8f3;color:#688677;font-size:12px;line-height:1.55}
+.activity-dialog .premium-form>label{display:grid;gap:5px;margin:14px 0;color:#456454}
+.activity-dialog .premium-form select{min-height:46px;background:#fff}
+.activity-dialog .activity-indoor-start{padding:17px;border:1px solid #cce9da;border-radius:15px;background:linear-gradient(145deg,#f7fcf9,#edf8f2)}
+.activity-dialog .activity-indoor-start>strong{color:#173d32;font:800 14px 'Manrope'}
+.activity-dialog .activity-indoor-start>p,.activity-dialog .activity-indoor-start>small{color:#6a8678;font-size:11px;line-height:1.55}
+.activity-dialog .activity-manual-heading{padding-top:17px;margin-top:3px}
+.activity-dialog .activity-media-field{padding-top:17px;border-top:1px solid #e0eee6}
+.activity-dialog .dialog-actions{position:sticky;bottom:0;padding:14px 0 0;background:linear-gradient(0deg,#f7fcf9 80%,#f7fcf900);z-index:3}
+@media(max-width:720px){
+ .premium-form .form-row{grid-template-columns:1fr;gap:2px}
+ .join-company.premium-form .inline-form,.team-settings.premium-form .inline-form{flex-direction:column;align-items:stretch}
+ .admin-create-admin-form.premium-form{padding:14px}
+ .profile-photo-settings{padding:15px}
+ .community-composer.premium-form{padding:12px}
+ .activity-dialog form.premium-form{padding:17px}
+ .activity-dialog .dialog-actions{bottom:0}
+ .map-finish.premium-form .map-finish-actions{display:grid;grid-template-columns:1fr}
+ .map-finish.premium-form .map-finish-actions button{width:100%}
+}
+@media(max-width:520px){
+ .activity-dialog .dialog-actions{bottom:0;padding:12px 0 0}
+ .activity-dialog .activity-media-dropzone{gap:5px}
+ .activity-dialog .activity-media-dropzone>strong{font-size:11px;line-height:1.25}
+ .activity-dialog .activity-upload-copy{font-size:10px;line-height:1.25}
+ .activity-dialog .activity-media-dropzone>.activity-upload-button{min-height:40px;max-width:100%;padding:6px 9px;white-space:normal;text-align:center;line-height:1.2;font-size:10px!important}
+ .activity-dialog .activity-media-dropzone>small{font-size:10px;line-height:1.25}
+ .activity-dialog .activity-edit-preservation,.activity-dialog .activity-share-card-main p{font-size:10px;line-height:1.45}
+ .activity-dialog .activity-share-card-main p{font-size:10px}
+ .activity-dialog .activity-share-card-footer span,.activity-dialog .activity-share-card-footer small{font-size:10px;white-space:normal}
+ .profile-settings .create-goal,.profile-settings .cancel-goal,.profile-settings button[type=submit]{min-height:44px;padding:12px 15px;font-size:11px}
+}
