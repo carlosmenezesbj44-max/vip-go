@@ -363,7 +363,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
         radius: 4,
         color: '#ffffff',
         weight: 2,
-        fillColor: color,
+        fillColor: '#e53935',
         fillOpacity: 1,
       }).bindTooltip(`${marker.distance} m`, { direction: 'top', opacity: 0.95 }).addTo(routeDistanceDots);
     }
