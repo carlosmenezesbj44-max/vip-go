@@ -81,6 +81,19 @@ const gpsActivityTypes = new Set([
   'Patinação', 'Canoagem', 'Escalada', 'Surfe', 'Skate', 'Natação', 'Futebol', 'Futsal', 'Basquete', 'Vôlei',
   'Tênis', 'Beach tennis', 'Remo',
 ]);
+function updateGreeting() {
+  const hour = new Date().getHours();
+  const greeting = hour >= 5 && hour < 12
+    ? ['Bom dia', '☀️']
+    : hour >= 12 && hour < 18
+      ? ['Boa tarde', '🌤️']
+      : ['Boa noite', '🌙'];
+  document.getElementById('greetingText').textContent = greeting[0];
+  document.getElementById('greetingIcon').textContent = greeting[1];
+}
+updateGreeting();
+setInterval(updateGreeting, 60 * 1000);
+
 function formatDuration(seconds) {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
