@@ -737,7 +737,9 @@ function renderParticipantChallenges(challenges = []) {
     const goal = Number(challenge.goalMinutes || 0);
     const progress = goal > 0 ? Math.min(100, minutes / goal * 100) : 0;
     const card = document.createElement('article');
-    card.className = 'participant-challenge';
+    card.className = 'participant-challenge participant-challenge-featured';
+    const content = document.createElement('div');
+    content.className = 'participant-challenge-content';
     const heading = document.createElement('div');
     heading.className = 'participant-challenge-heading';
     const title = document.createElement('h3');
@@ -746,15 +748,19 @@ function renderParticipantChallenges(challenges = []) {
     badge.className = 'goal-badge';
     badge.textContent = challengeParticipationLabel(challenge);
     heading.append(title, badge);
-    card.append(heading);
+    content.append(heading);
     if (challenge.description) {
       const description = document.createElement('p');
       description.textContent = challenge.description;
-      card.append(description);
+      content.append(description);
     }
+    const goalLine = document.createElement('p');
+    goalLine.className = 'participant-challenge-goal';
+    goalLine.textContent = `🏅 Complete ${goal.toLocaleString('pt-BR')} minutos de atividade neste desafio.`;
+    content.append(goalLine);
     const period = document.createElement('small');
     period.textContent = `${challenge.periodType === 'monthly' ? 'Mensal' : 'Semanal'} · ${formatChallengeDate(challenge.startsAt)} – ${formatChallengeDate(challenge.endsAt)}`;
-    card.append(period);
+    content.append(period);
     if (challenge.accepted) {
       const metrics = document.createElement('div');
       metrics.className = 'participant-challenge-metrics';
@@ -763,20 +769,20 @@ function renderParticipantChallenges(challenges = []) {
       const target = document.createElement('span');
       target.textContent = `de ${goal} min · ${Number(challenge.activityCount || 0)} atividade${Number(challenge.activityCount || 0) === 1 ? '' : 's'}`;
       metrics.append(current, target);
-      card.append(metrics);
+      content.append(metrics);
       const bar = document.createElement('div');
       bar.className = 'bar participant-challenge-bar';
       const fill = document.createElement('i');
       fill.style.width = `${progress}%`;
       bar.append(fill);
-      card.append(bar);
+      content.append(bar);
     } else {
       const explanation = document.createElement('p');
       explanation.className = 'challenge-invitation-copy';
       explanation.textContent = challenge.status === 'upcoming'
         ? 'Aceite agora para participar quando o desafio começar.'
         : 'Aceite este desafio para participar e acompanhar seu progresso.';
-      card.append(explanation);
+      content.append(explanation);
       const acceptButton = document.createElement('button');
       acceptButton.type = 'button';
       acceptButton.className = 'accept-challenge-button';
@@ -792,14 +798,29 @@ function renderParticipantChallenges(challenges = []) {
           acceptButton.disabled = false;
         }
       });
-      card.append(acceptButton);
+      content.append(acceptButton);
     }
     if (challenge.rewardText) {
       const reward = document.createElement('p');
       reward.className = 'participant-challenge-reward';
       reward.textContent = `🎁 ${challenge.rewardText}`;
-      card.append(reward);
+      content.append(reward);
     }
+    const cover = document.createElement('div');
+    cover.className = 'participant-challenge-cover';
+    if (challenge.coverImage) {
+      const image = document.createElement('img');
+      image.src = challenge.coverImage;
+      image.alt = `Capa do desafio ${challenge.title}`;
+      image.loading = 'lazy';
+      cover.append(image);
+    } else {
+      cover.classList.add('is-placeholder');
+      const wordmark = document.createElement('strong');
+      wordmark.textContent = 'VIP GO';
+      cover.append(wordmark);
+    }
+    card.append(content, cover);
     list.append(card);
   });
 }
@@ -819,6 +840,13 @@ function renderAdminChallenges(challenges = []) {
     row.className = 'admin-team-row';
     const copy = document.createElement('div');
     copy.className = 'admin-challenge-copy';
+    if (challenge.coverImage) {
+      const cover = document.createElement('img');
+      cover.className = 'admin-challenge-thumb';
+      cover.src = challenge.coverImage;
+      cover.alt = '';
+      copy.append(cover);
+    }
     const title = document.createElement('strong');
     title.textContent = challenge.title;
     const detail = document.createElement('small');
@@ -1561,24 +1589,69 @@ function setChallengeDefaultDates() {
 
 document.getElementById('challengePeriodInput').addEventListener('change', setChallengeDefaultDates);
 setChallengeDefaultDates();
+let challengeCoverPreviewUrl = null;
+document.getElementById('challengeCoverInput').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  const preview = document.getElementById('challengeCoverPreview');
+  const help = document.getElementById('challengeCoverHelp');
+  if (challengeCoverPreviewUrl) URL.revokeObjectURL(challengeCoverPreviewUrl);
+  challengeCoverPreviewUrl = null;
+  preview.replaceChildren();
+  if (!file) { preview.hidden = true; help.textContent = 'JPEG, PNG ou WebP · até 5 MB'; return; }
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+    event.target.value = '';
+    preview.hidden = true;
+    help.textContent = 'Escolha JPEG, PNG ou WebP de até 5 MB.';
+    showToast('A capa deve ser JPEG, PNG ou WebP e ter até 5 MB.');
+    return;
+  }
+  challengeCoverPreviewUrl = URL.createObjectURL(file);
+  const image = document.createElement('img');
+  image.src = challengeCoverPreviewUrl;
+  image.alt = 'Prévia da capa do desafio';
+  preview.append(image);
+  preview.hidden = false;
+  help.textContent = `${file.name} · pronto para publicar`;
+});
+
+function readChallengeCover() {
+  const file = document.getElementById('challengeCoverInput').files[0];
+  if (!file) return Promise.resolve(null);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Não foi possível ler a imagem da capa.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 document.getElementById('createChallengeButton').addEventListener('click', async () => {
-  const fields = {
-    title: document.getElementById('challengeTitleInput').value.trim(),
-    description: document.getElementById('challengeDescriptionInput').value.trim(),
-    goalMinutes: Number(document.getElementById('challengeGoalInput').value),
-    periodType: document.getElementById('challengePeriodInput').value,
-    startsOn: document.getElementById('challengeStartsInput').value,
-    endsOn: document.getElementById('challengeEndsInput').value,
-    rewardText: document.getElementById('challengeRewardInput').value.trim(),
-  };
+  const button = document.getElementById('createChallengeButton');
+  button.disabled = true;
   try {
+    const fields = {
+      title: document.getElementById('challengeTitleInput').value.trim(),
+      description: document.getElementById('challengeDescriptionInput').value.trim(),
+      goalMinutes: Number(document.getElementById('challengeGoalInput').value),
+      periodType: document.getElementById('challengePeriodInput').value,
+      startsOn: document.getElementById('challengeStartsInput').value,
+      endsOn: document.getElementById('challengeEndsInput').value,
+      rewardText: document.getElementById('challengeRewardInput').value.trim(),
+      coverImage: await readChallengeCover(),
+    };
     await api('/admin/challenges', { method: 'POST', body: JSON.stringify(fields) });
     document.getElementById('challengeTitleInput').value = '';
     document.getElementById('challengeDescriptionInput').value = '';
     document.getElementById('challengeRewardInput').value = '';
+    document.getElementById('challengeCoverInput').value = '';
+    document.getElementById('challengeCoverPreview').hidden = true;
+    document.getElementById('challengeCoverHelp').textContent = 'JPEG, PNG ou WebP · até 5 MB';
+    if (challengeCoverPreviewUrl) URL.revokeObjectURL(challengeCoverPreviewUrl);
+    challengeCoverPreviewUrl = null;
     await loadAccountData();
     showToast('Desafio publicado e visível para os participantes.');
   } catch (error) { showToast(error.message); }
+  finally { button.disabled = false; }
 });
 
 document.getElementById('copyInviteCode').addEventListener('click', async () => {

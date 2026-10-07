@@ -57,6 +57,10 @@ function publicUser(id) {
   return statements.publicUserById.get(id);
 }
 
+function challengeWithCover(challenge) {
+  return { ...challenge, coverImage: challenge.coverImage ? `/api/challenge-covers/${challenge.coverImage}` : null };
+}
+
 function establishUserSession(req, userId) {
   return new Promise((resolve, reject) => {
     req.session.regenerate((regenerateError) => {
@@ -326,6 +330,19 @@ app.get('/api/media/:filename', authRequired, (req, res) => {
   createReadStream(resolve(uploadsDirectory, filename)).on('error', () => { if (!res.headersSent) res.status(404).end(); }).pipe(res);
 });
 
+app.get('/api/challenge-covers/:filename', authRequired, (req, res) => {
+  const filename = req.params.filename;
+  if (!/^[a-f0-9]{36}\.(jpg|png|webp)$/.test(filename)) return res.status(404).end();
+  const cover = statements.challengeCoverByFilename.get(filename);
+  const viewer = publicUser(req.session.userId);
+  const campaign = viewer?.companyId ? statements.campaignByCompany.get(viewer.companyId) : null;
+  if (!cover || campaign?.id !== cover.campaignId) return res.status(404).end();
+  const contentType = ({ jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' })[filename.split('.').pop()];
+  res.type(contentType);
+  res.set('Cache-Control', 'private, max-age=3600');
+  createReadStream(resolve(uploadsDirectory, filename)).on('error', () => { if (!res.headersSent) res.status(404).end(); }).pipe(res);
+});
+
 app.get('/api/profile-photos/:filename', authRequired, (req, res) => {
   const filename = req.params.filename;
   if (!/^[a-f0-9]{36}\.(jpg|png|webp)$/.test(filename)) return res.status(404).end();
@@ -404,7 +421,7 @@ app.get('/api/campaign', authRequired, (req, res) => {
     joinCode: statements.companyById.get(user.companyId).joinCode,
     summary: statements.companySummary.get(user.companyId),
     teams: statements.teamsForCompany.all(user.companyId),
-    challenges: statements.challengesForCampaign.all(campaign.id),
+    challenges: statements.challengesForCampaign.all(campaign.id).map(challengeWithCover),
     admins: statements.campaignAdmins.all(campaign.id),
     canManageAdmins: campaign.adminUserId === user.id,
   } : null;
@@ -414,6 +431,7 @@ app.get('/api/campaign', authRequired, (req, res) => {
     const now = Date.now();
     return {
       ...challenge,
+      coverImage: challenge.coverImage ? `/api/challenge-covers/${challenge.coverImage}` : null,
       status: now < Date.parse(challenge.startsAt) ? 'upcoming' : now >= Date.parse(challenge.endsAt) ? 'ended' : 'active',
       accepted: Boolean(participation),
       acceptedAt: participation?.acceptedAt || null,
@@ -702,7 +720,7 @@ app.put('/api/admin/campaign', authRequired, campaignAdminRequired, (req, res) =
   res.json({ campaign: statements.campaignByCompany.get(req.adminUser.companyId) });
 });
 
-app.post('/api/admin/challenges', authRequired, campaignAdminRequired, (req, res) => {
+app.post('/api/admin/challenges', authRequired, campaignAdminRequired, async (req, res) => {
   const title = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
   const description = typeof req.body?.description === 'string' ? req.body.description.trim() : '';
   const rewardText = typeof req.body?.rewardText === 'string' ? req.body.rewardText.trim() : '';
@@ -710,6 +728,7 @@ app.post('/api/admin/challenges', authRequired, campaignAdminRequired, (req, res
   const periodType = req.body?.periodType;
   const startsOn = typeof req.body?.startsOn === 'string' ? req.body.startsOn : '';
   const endsOn = typeof req.body?.endsOn === 'string' ? req.body.endsOn : '';
+  const coverData = req.body?.coverImage;
   const datePattern = /^\d{4}-\d{2}-\d{2}$/;
   if (title.length < 2 || title.length > 80) return res.status(400).json({ error: 'O título deve ter de 2 a 80 caracteres.' });
   if (description.length > 240 || rewardText.length > 160) return res.status(400).json({ error: 'Descrição ou premiação excede o limite.' });
@@ -722,24 +741,46 @@ app.post('/api/admin/challenges', authRequired, campaignAdminRequired, (req, res
   const durationDays = (end - start) / 86400000;
   const maxDays = periodType === 'weekly' ? 7 : 31;
   if (durationDays < 1 || durationDays > maxDays) return res.status(400).json({ error: periodType === 'weekly' ? 'O desafio semanal deve durar de 1 a 7 dias.' : 'O desafio mensal deve durar de 1 a 31 dias.' });
-  statements.createChallenge.run({
-    campaignId: req.adminCampaign.id,
-    title,
-    description,
-    goalMinutes,
-    periodType,
-    startsAt: start.toISOString(),
-    endsAt: end.toISOString(),
-    rewardText,
-    createdBy: req.adminUser.id,
-  });
-  res.status(201).json({ challenges: statements.challengesForCampaign.all(req.adminCampaign.id) });
+  let coverFilename = null;
+  if (coverData !== undefined && coverData !== null) {
+    const match = typeof coverData === 'string' && coverData.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+    if (!match) return res.status(400).json({ error: 'Escolha uma capa JPEG, PNG ou WebP válida.' });
+    const buffer = Buffer.from(match[2], 'base64');
+    const validImage = match[1] === 'image/jpeg' ? buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))
+      : match[1] === 'image/png' ? buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+        : buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP';
+    if (!buffer.length || buffer.length > 5 * 1024 * 1024 || !validImage) return res.status(400).json({ error: 'A capa deve ser uma imagem válida de até 5 MB.' });
+    const extension = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[match[1]];
+    coverFilename = `${randomBytes(18).toString('hex')}.${extension}`;
+    await mkdir(uploadsDirectory, { recursive: true });
+    await writeFile(resolve(uploadsDirectory, coverFilename), buffer, { flag: 'wx' });
+  }
+  try {
+    statements.createChallenge.run({
+      campaignId: req.adminCampaign.id,
+      title,
+      description,
+      goalMinutes,
+      periodType,
+      startsAt: start.toISOString(),
+      endsAt: end.toISOString(),
+      rewardText,
+      createdBy: req.adminUser.id,
+      coverImage: coverFilename,
+    });
+  } catch (error) {
+    if (coverFilename) await unlink(resolve(uploadsDirectory, coverFilename)).catch(() => {});
+    throw error;
+  }
+  res.status(201).json({ challenges: statements.challengesForCampaign.all(req.adminCampaign.id).map(challengeWithCover) });
 });
 
-app.delete('/api/admin/challenges/:id', authRequired, campaignAdminRequired, (req, res) => {
+app.delete('/api/admin/challenges/:id', authRequired, campaignAdminRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!statements.challengeById.get(id, req.adminCampaign.id)) return res.status(404).json({ error: 'Desafio não encontrado.' });
+  const { coverImage } = statements.challengeCoverById.get(id, req.adminCampaign.id) || {};
   statements.deleteChallenge.run(id, req.adminCampaign.id);
+  if (coverImage) await unlink(resolve(uploadsDirectory, coverImage)).catch((error) => { if (error.code !== 'ENOENT') console.error('Não foi possível remover a capa do desafio.', error); });
   res.status(204).end();
 });
 

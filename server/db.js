@@ -159,6 +159,8 @@ if (!existingActivityColumns.has('max_heart_rate')) database.exec('ALTER TABLE a
 if (!existingActivityColumns.has('matched_route_json')) database.exec("ALTER TABLE activities ADD COLUMN matched_route_json TEXT NOT NULL DEFAULT '[]'");
 const existingCommunityPostColumns = new Set(database.prepare('PRAGMA table_info(community_posts)').all().map((column) => column.name));
 if (!existingCommunityPostColumns.has('community_id')) database.exec('ALTER TABLE community_posts ADD COLUMN community_id INTEGER REFERENCES communities(id) ON DELETE CASCADE');
+const existingChallengeColumns = new Set(database.prepare('PRAGMA table_info(challenges)').all().map((column) => column.name));
+if (!existingChallengeColumns.has('cover_image')) database.exec('ALTER TABLE challenges ADD COLUMN cover_image TEXT');
 database.exec(`UPDATE campaigns SET admin_user_id = (
   SELECT id FROM users WHERE users.company_id = campaigns.company_id ORDER BY users.created_at, users.id LIMIT 1
 ) WHERE admin_user_id IS NULL AND EXISTS (SELECT 1 FROM users WHERE users.company_id = campaigns.company_id)`);
@@ -199,9 +201,11 @@ export const statements = {
   updateCampaign: database.prepare('UPDATE campaigns SET name = ?, weekly_goal_minutes = ?, reward_text = ?, period_type = ? WHERE id = ?'),
   claimCampaignAdmin: database.prepare('UPDATE campaigns SET admin_user_id = ? WHERE company_id = ? AND admin_user_id IS NULL'),
   companySummary: database.prepare('SELECT COUNT(*) AS participantCount, SUM(CASE WHEN show_in_ranking = 1 THEN 1 ELSE 0 END) AS visibleParticipantCount, COUNT(DISTINCT team_id) AS teamCount FROM users WHERE company_id = ?'),
-  challengesForCampaign: database.prepare('SELECT id, title, description, goal_minutes AS goalMinutes, period_type AS periodType, starts_at AS startsAt, ends_at AS endsAt, reward_text AS rewardText FROM challenges WHERE campaign_id = ? ORDER BY starts_at DESC, id DESC'),
-  createChallenge: database.prepare('INSERT INTO challenges (campaign_id, title, description, goal_minutes, period_type, starts_at, ends_at, reward_text, created_by) VALUES (@campaignId, @title, @description, @goalMinutes, @periodType, @startsAt, @endsAt, @rewardText, @createdBy)'),
+  challengesForCampaign: database.prepare('SELECT id, title, description, goal_minutes AS goalMinutes, period_type AS periodType, starts_at AS startsAt, ends_at AS endsAt, reward_text AS rewardText, cover_image AS coverImage FROM challenges WHERE campaign_id = ? ORDER BY starts_at DESC, id DESC'),
+  createChallenge: database.prepare('INSERT INTO challenges (campaign_id, title, description, goal_minutes, period_type, starts_at, ends_at, reward_text, created_by, cover_image) VALUES (@campaignId, @title, @description, @goalMinutes, @periodType, @startsAt, @endsAt, @rewardText, @createdBy, @coverImage)'),
   deleteChallenge: database.prepare('DELETE FROM challenges WHERE id = ? AND campaign_id = ?'),
+  challengeCoverByFilename: database.prepare('SELECT campaign_id AS campaignId FROM challenges WHERE cover_image = ?'),
+  challengeCoverById: database.prepare('SELECT cover_image AS coverImage FROM challenges WHERE id = ? AND campaign_id = ?'),
   challengeById: database.prepare('SELECT id, starts_at AS startsAt, ends_at AS endsAt FROM challenges WHERE id = ? AND campaign_id = ?'),
   challengeProgress: database.prepare('SELECT COALESCE(SUM(duration_seconds), 0) AS durationSeconds, COUNT(*) AS activityCount FROM activities WHERE user_id = ? AND started_at >= ? AND started_at < ?'),
   acceptedChallenge: database.prepare('SELECT accepted_at AS acceptedAt FROM challenge_participants WHERE challenge_id = ? AND user_id = ?'),
