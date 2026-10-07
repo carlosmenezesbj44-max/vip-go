@@ -1484,7 +1484,7 @@ function openActivityView(activity) {
     if (activityViewRunner) activityViewRunner.remove();
     if (activityViewAnimationFrame) cancelAnimationFrame(activityViewAnimationFrame);
     activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
-    const runnerIcon = L.divIcon({ className: 'activity-route-runner', html: '<span class="activity-runner-sprite" aria-hidden="true">🏃</span>', iconSize: [32, 32], iconAnchor: [16, 16] });
+    const runnerIcon = L.divIcon({ className: 'activity-route-runner', html: '<svg class="runner-svg" viewBox="0 0 40 48" aria-hidden="true"><g class="runner-body"><circle cx="24" cy="7" r="5" fill="#ffb25c"/><path d="M22 13l-7 10 8 5 5-11-6-4Z" fill="#00a98f"/><g class="runner-arm-back"><path d="M19 16l-8 5-4-4" fill="none" stroke="#123f36" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></g><g class="runner-arm-front"><path d="M25 16l7 4 4-5" fill="none" stroke="#087d69" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></g><g class="runner-leg-back"><path d="M20 27l-7 8-7 1" fill="none" stroke="#164b40" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 36l-3 2" fill="none" stroke="#f2a64d" stroke-width="3" stroke-linecap="round"/></g><g class="runner-leg-front"><path d="M23 28l7 7 4 7" fill="none" stroke="#00a98f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 42l3 1" fill="none" stroke="#f2a64d" stroke-width="3" stroke-linecap="round"/></g></g></svg>', iconSize: [38, 46], iconAnchor: [19, 23] });
     activityViewRunner = L.marker([route[0].lat, route[0].lng], { icon: runnerIcon, interactive: false, zIndexOffset: 1000 }).addTo(activityViewMap);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
     const routeCoordinates = route.map((point) => [Number(point.lat), Number(point.lng)]);
@@ -1518,11 +1518,9 @@ function openActivityView(activity) {
       const a = routeCoordinates[segment];
       const b = routeCoordinates[segment + 1];
       activityViewRunner.setLatLng([a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]);
-      const sprite = activityViewRunner.getElement()?.querySelector('.activity-runner-sprite');
+      const sprite = activityViewRunner.getElement()?.querySelector('.runner-svg');
       if (sprite) {
-        const running = Math.floor(now / 110) % 2 === 0;
-        sprite.classList.toggle('is-running', running);
-        sprite.classList.toggle('is-running-alt', !running);
+        sprite.style.setProperty('--run-phase', `${(now % 420) / 420 * 360}deg`);
         const latDelta = b[0] - a[0];
         const lngDelta = b[1] - a[1];
         const bearing = Math.atan2(lngDelta * Math.cos(a[0] * Math.PI / 180), latDelta) * 180 / Math.PI;

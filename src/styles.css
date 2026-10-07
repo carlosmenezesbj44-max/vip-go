@@ -1204,3 +1204,11 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 @keyframes activity-run-bounce{from{translate:0 1px;scale:1}to{translate:0 -2px;scale:1.06}}
 @keyframes activity-run-bounce-alt{from{translate:0 -2px;scale:1.06}to{translate:0 1px;scale:1}}
 @media(prefers-reduced-motion:reduce){.activity-route-runner .activity-runner-sprite{animation:none!important}}
+.activity-route-runner{display:grid;place-items:center;width:38px!important;height:46px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none}
+.activity-route-runner .runner-svg{width:34px;height:42px;overflow:visible;transform:rotate(var(--runner-heading,0deg));transform-origin:50% 50%;filter:drop-shadow(0 1px 1px #fff);will-change:transform}
+.activity-route-runner .runner-body{transform-origin:20px 25px;animation:runner-bob .21s ease-in-out infinite alternate}
+.activity-route-runner .runner-arm-front,.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front,.activity-route-runner .runner-leg-back{transform-box:view-box;transform-origin:20px 24px;animation:runner-limb .21s ease-in-out infinite alternate}
+.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front{animation-delay:-.21s}
+@keyframes runner-limb{from{transform:rotate(-25deg)}to{transform:rotate(25deg)}}
+@keyframes runner-bob{from{transform:translateY(0)}to{transform:translateY(-1.8px)}}
+@media(prefers-reduced-motion:reduce){.activity-route-runner .runner-body,.activity-route-runner .runner-arm-front,.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front,.activity-route-runner .runner-leg-back{animation:none}}
