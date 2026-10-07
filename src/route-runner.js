@@ -1,5 +1,41 @@
 const MARKER_HTML = '<span class="route-progress-dot" aria-hidden="true"></span>';
 
+const radians = Math.PI / 180;
+function metersBetween(a, b) {
+  const dLat = (b.lat - a.lat) * radians;
+  const dLng = (b.lng - a.lng) * radians;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * radians) * Math.cos(b.lat * radians) * Math.sin(dLng / 2) ** 2;
+  return 12742000 * Math.asin(Math.sqrt(Math.min(1, h)));
+}
+
+export function pointsAtDistanceIntervals(route, interval = 100) {
+  const markers = [];
+  if (!Array.isArray(route) || route.length < 2) return markers;
+  let distance = 0;
+  let nextMarker = interval;
+  for (let index = 1; index < route.length; index += 1) {
+    const start = route[index - 1];
+    const end = route[index];
+    const length = metersBetween(start, end);
+    if (!length) continue;
+    while (nextMarker <= distance + length) {
+      const fraction = (nextMarker - distance) / length;
+      markers.push({ distance: nextMarker, lat: start.lat + (end.lat - start.lat) * fraction, lng: start.lng + (end.lng - start.lng) * fraction });
+      nextMarker += interval;
+    }
+    distance += length;
+  }
+  return markers;
+}
+
+export function addDistanceMarkers(L, layer, route, { permanent = false } = {}) {
+  pointsAtDistanceIntervals(route, 100).forEach((point) => {
+    L.circleMarker([point.lat, point.lng], { radius: 4, color: '#fff', weight: 2, fillColor: '#e53935', fillOpacity: 1 })
+      .bindTooltip(`${point.distance} m`, { direction: 'top', opacity: 0.95, permanent, className: 'route-distance-tooltip' })
+      .addTo(layer);
+  });
+}
+
 export function createProgressIcon(L) {
   return L.divIcon({ className: 'route-progress-marker', html: MARKER_HTML, iconSize: [20, 20], iconAnchor: [10, 10] });
 }

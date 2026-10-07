@@ -1,5 +1,5 @@
 import { createMapsController } from './maps.js';
-import { animateRouteMarker } from './route-runner.js';
+import { addDistanceMarkers, animateRouteMarker } from './route-runner.js';
 import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
 import { setupPasswordVisibility } from './password-visibility.js';
 import '../assets/vendor/leaflet/leaflet.css';
@@ -16,6 +16,7 @@ let activityCache = null;
 let editingActivityId = null;
 let activityViewMap;
 let activityViewRouteLayer;
+let activityViewDistanceLayer;
 let activityViewMarker;
 let communityPhotoFiles = [];
 let communityCommentState = new Map();
@@ -1499,8 +1500,11 @@ function openActivityView(activity) {
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(activityViewMap);
     }
     if (activityViewRouteLayer) activityViewRouteLayer.remove();
+    if (activityViewDistanceLayer) activityViewDistanceLayer.remove();
     activityViewMarker?.stop();
     activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
+    activityViewDistanceLayer = L.layerGroup().addTo(activityViewMap);
+    addDistanceMarkers(L, activityViewDistanceLayer, route);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
     activityViewMarker = animateRouteMarker(L, activityViewMap, route);
     setTimeout(() => activityViewMap.invalidateSize(), 50);

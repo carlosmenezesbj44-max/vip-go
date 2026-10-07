@@ -1228,3 +1228,5 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 .route-distance-milestone strong{font:800 12px 'Manrope',sans-serif}
 @media(max-width:520px){.route-distance-milestone{top:10px;padding:8px 12px}.route-distance-milestone strong{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.route-distance-milestone{transition:none}}
+.route-distance-tooltip{padding:2px 5px!important;border:1px solid #f0b9b3!important;border-radius:6px!important;background:rgba(255,250,249,.96)!important;color:#aa302b!important;font:700 9px 'DM Sans',sans-serif!important;box-shadow:0 1px 4px #1c282522!important}
+.route-distance-tooltip:before{border-top-color:#f0b9b3!important}

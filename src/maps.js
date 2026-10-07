@@ -1,49 +1,7 @@
 import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
-import { animateRouteMarker, createProgressMarker } from './route-runner.js';
+import { addDistanceMarkers, animateRouteMarker, createProgressMarker } from './route-runner.js';
 
 const $ = (id) => document.getElementById(id);
-const radians = Math.PI / 180;
-const distanceActivityTypes = new Set([
-  'Caminhada', 'Corrida', 'Corrida de rua', 'Corrida em trilha', 'Trilha', 'Ciclismo', 'Mountain bike',
-  'Patinação', 'Canoagem', 'Escalada', 'Surfe', 'Skate', 'Natação', 'Futebol', 'Futsal', 'Basquete', 'Vôlei',
-  'Tênis', 'Beach tennis', 'Remo', 'Ciclismo indoor', 'Spinning', 'Elíptico', 'Escada',
-]);
-const gpsActivityTypes = new Set([
-  'Caminhada', 'Corrida', 'Corrida de rua', 'Corrida em trilha', 'Trilha', 'Ciclismo', 'Mountain bike',
-  'Patinação', 'Canoagem', 'Escalada', 'Surfe', 'Skate', 'Natação', 'Futebol', 'Futsal', 'Basquete', 'Vôlei',
-  'Tênis', 'Beach tennis', 'Remo',
-]);
-
-function metersBetween(a, b) {
-  const dLat = (b.lat - a.lat) * radians;
-  const dLng = (b.lng - a.lng) * radians;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * radians) * Math.cos(b.lat * radians) * Math.sin(dLng / 2) ** 2;
-  return 12742000 * Math.asin(Math.sqrt(Math.min(1, h)));
-}
-
-function pointsAtDistanceIntervals(route, interval = 100) {
-  const markers = [];
-  if (!Array.isArray(route) || route.length < 2) return markers;
-  let distance = 0;
-  let nextMarker = interval;
-  for (let index = 1; index < route.length; index += 1) {
-    const start = route[index - 1];
-    const end = route[index];
-    const segmentLength = metersBetween(start, end);
-    if (!segmentLength) continue;
-    while (nextMarker <= distance + segmentLength) {
-      const fraction = (nextMarker - distance) / segmentLength;
-      markers.push({
-        distance: nextMarker,
-        lat: start.lat + (end.lat - start.lat) * fraction,
-        lng: start.lng + (end.lng - start.lng) * fraction,
-      });
-      nextMarker += interval;
-    }
-    distance += segmentLength;
-  }
-  return markers;
-}
 
 function smoothRouteForDisplay(route) {
   if (!Array.isArray(route) || route.length < 3) return route || [];
@@ -482,15 +440,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     shownRoute.setStyle({ color });
     shownRoute.setLatLngs(displayRoute.map((point) => [point.lat, point.lng]));
     routeDistanceDots.clearLayers();
-    for (const marker of pointsAtDistanceIntervals(displayRoute, 100)) {
-      L.circleMarker([marker.lat, marker.lng], {
-        radius: 4,
-        color: '#ffffff',
-        weight: 2,
-        fillColor: '#e53935',
-        fillOpacity: 1,
-      }).bindTooltip(`${marker.distance} m`, { direction: 'top', opacity: 0.95 }).addTo(routeDistanceDots);
-    }
+    addDistanceMarkers(L, routeDistanceDots, displayRoute);
     map.fitBounds(shownRoute.getBounds(), { padding: [35, 35], maxZoom: 16 });
     selectedRouteMarker = animateRouteMarker(L, map, displayRoute);
     document.querySelectorAll('.map-route-row').forEach((row) => row.classList.toggle('selected', row.dataset.routeId === String(id) && row.dataset.routeType === type));
