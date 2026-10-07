@@ -1,5 +1,8 @@
 import { createMapsController } from './maps.js';
+import { setupPasswordVisibility } from './password-visibility.js';
 import '../assets/vendor/leaflet/leaflet.css';
+
+setupPasswordVisibility();
 
 const STORAGE_KEY = 'vip-go-activities-v1';
 const toast = document.getElementById('toast');
@@ -995,6 +998,83 @@ function renderAdminAdmins(admins = []) {
   });
 }
 
+let adminParticipants = [];
+let adminParticipantTeams = [];
+
+function renderAdminParticipants(query = '') {
+  const list = document.getElementById('adminParticipantsList');
+  if (!list) return;
+  const normalized = query.trim().toLocaleLowerCase('pt-BR');
+  const participants = adminParticipants.filter((person) => `${person.name} ${person.email}`.toLocaleLowerCase('pt-BR').includes(normalized));
+  document.getElementById('adminParticipantsCount').textContent = String(adminParticipants.length);
+  list.replaceChildren();
+  if (!participants.length) {
+    const empty = document.createElement('p');
+    empty.className = 'activity-empty';
+    empty.textContent = adminParticipants.length ? 'Nenhum cadastro corresponde à busca.' : 'Ainda não há participantes nesta campanha.';
+    list.append(empty);
+    return;
+  }
+
+  const teams = adminParticipantTeams;
+  participants.forEach((person) => {
+    const row = document.createElement('article');
+    row.className = 'admin-participant-row';
+    row.dataset.participantId = String(person.id);
+    const details = document.createElement('div');
+    details.className = 'admin-participant-details';
+    const name = document.createElement('strong');
+    name.textContent = person.name;
+    const email = document.createElement('span');
+    email.textContent = person.email;
+    const meta = document.createElement('small');
+    const joinedDate = new Date(`${person.createdAt}Z`);
+    meta.textContent = `Cadastro: ${Number.isNaN(joinedDate.getTime()) ? 'data indisponível' : joinedDate.toLocaleDateString('pt-BR')} · ${person.isAdmin ? 'Administrador' : 'Participante'} · ${person.showInRanking ? 'No ranking' : 'Fora do ranking'}`;
+    details.append(name, email, meta);
+    const form = document.createElement('form');
+    form.className = 'admin-participant-edit premium-form';
+    form.dataset.participantId = String(person.id);
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Nome';
+    const nameInput = document.createElement('input');
+    nameInput.name = 'name'; nameInput.required = true; nameInput.minLength = 2; nameInput.maxLength = 60; nameInput.value = person.name;
+    nameLabel.append(nameInput);
+    const emailLabel = document.createElement('label');
+    emailLabel.textContent = 'E-mail';
+    const emailInput = document.createElement('input');
+    emailInput.name = 'email'; emailInput.type = 'email'; emailInput.required = true; emailInput.maxLength = 254; emailInput.value = person.email;
+    emailLabel.append(emailInput);
+    const teamLabel = document.createElement('label');
+    teamLabel.textContent = 'Equipe';
+    const teamSelect = document.createElement('select');
+    teamSelect.name = 'teamId';
+    teamSelect.add(new Option('Sem equipe', ''));
+    teams.forEach((team) => teamSelect.add(new Option(team.name, team.id)));
+    teamSelect.value = person.teamId ? String(person.teamId) : '';
+    teamLabel.append(teamSelect);
+    const save = document.createElement('button');
+    save.className = 'create-goal'; save.type = 'submit'; save.textContent = 'Salvar';
+    form.append(nameLabel, emailLabel, teamLabel, save);
+    row.append(details, form);
+    list.append(row);
+  });
+}
+
+async function loadAdminParticipants() {
+  const list = document.getElementById('adminParticipantsList');
+  if (!list) return;
+  list.innerHTML = '<p class="activity-empty">Carregando participantes…</p>';
+  try {
+    const result = await api('/admin/participants');
+    adminParticipants = result.participants || [];
+    adminParticipantTeams = result.teams || [];
+    renderAdminParticipants(document.getElementById('adminParticipantsSearch').value);
+  } catch (error) {
+    list.innerHTML = '';
+    const message = document.createElement('p'); message.className = 'activity-empty'; message.textContent = error.message; list.append(message);
+  }
+}
+
 function renderAdminTeams(teams = []) {
   const list = document.getElementById('adminTeamList');
   list.replaceChildren();
@@ -1135,6 +1215,30 @@ function setAdminTab(name) {
 
 document.querySelectorAll('[data-profile-tab]').forEach((tab) => tab.addEventListener('click', () => setProfileTab(tab.dataset.profileTab)));
 document.querySelectorAll('[data-admin-tab]').forEach((tab) => tab.addEventListener('click', () => setAdminTab(tab.dataset.adminTab)));
+document.querySelector('[data-admin-tab="participants"]').addEventListener('click', loadAdminParticipants);
+document.getElementById('adminParticipantsSearch').addEventListener('input', (event) => renderAdminParticipants(event.currentTarget.value));
+document.getElementById('adminParticipantsList').addEventListener('submit', async (event) => {
+  if (!event.target.matches('.admin-participant-edit')) return;
+  event.preventDefault();
+  const form = event.target;
+  const button = form.querySelector('button[type="submit"]');
+  const error = document.getElementById('adminParticipantEditError');
+  const fields = new FormData(form);
+  error.hidden = true;
+  button.disabled = true;
+  try {
+    const result = await api(`/admin/participants/${form.dataset.participantId}`, { method: 'PUT', body: JSON.stringify({
+      name: fields.get('name'), email: fields.get('email'), teamId: fields.get('teamId') || null,
+    }) });
+    adminParticipants = result.participants || [];
+    renderAdminParticipants(document.getElementById('adminParticipantsSearch').value);
+    showToast('Cadastro do participante atualizado.');
+  } catch (requestError) {
+    error.textContent = requestError.message;
+    error.hidden = false;
+    button.disabled = false;
+  }
+});
 document.getElementById('openAdminChallenges').addEventListener('click', () => {
   setAdminTab('challenges');
   document.getElementById('challengeTitleInput').focus();

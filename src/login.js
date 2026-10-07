@@ -1,3 +1,7 @@
+import { setupPasswordVisibility } from './password-visibility.js';
+
+setupPasswordVisibility();
+
 const form = document.getElementById('loginForm');
 const errorNode = document.getElementById('loginError');
 const tabs = [...document.querySelectorAll('.login-tab')];
