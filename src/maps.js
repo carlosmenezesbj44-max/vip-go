@@ -74,7 +74,7 @@ function baseActivityMode(activityType) {
   return 'Caminhada';
 }
 
-export function createMapsController({ api, readActivities, loadAccountData, showToast, getUser, showLogin }) {
+export function createMapsController({ api, readActivities, loadAccountData, showToast, getUser, showLogin, onActivityStateChange = () => {} }) {
   let map;
   let previewMap;
   let previewMarker;
@@ -88,6 +88,12 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   let shownRoute;
   let routeDistanceDots;
   let liveRoute;
+  let liveParticipantLayer;
+  let liveParticipantMarkers = new Map();
+  let liveParticipantTimer = null;
+  let liveRequestQueue = Promise.resolve();
+  let lastLiveUpdateAt = 0;
+  let liveSharingRequested = false;
   let plannedRouteLayer;
   let plannedStartMarker;
   let plannedEndMarker;
@@ -111,6 +117,46 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   let mediaObjectUrls = [];
 
   function status(message) { $('mapStatus').textContent = message; }
+  function liveShareStatus(message) { $('mapLiveShareStatus').textContent = message; }
+  function queueLiveRequest(body) {
+    liveRequestQueue = liveRequestQueue.catch(() => {}).then(() => api('/live-activities/location', { method: 'POST', body: JSON.stringify(body) }));
+    return liveRequestQueue;
+  }
+  function updateLiveShareAvailability() {
+    const control = $('mapShareLive');
+    const user = getUser();
+    const canShare = Boolean(user?.companyId && (!trackingActive || trackingWithGps) && gpsActivityTypes.has($('mapMode').value));
+    control.disabled = !canShare;
+    if (!user?.companyId) liveShareStatus('Entre em uma campanha para compartilhar sua posição ao vivo.');
+    else if (trackingActive && !trackingWithGps) liveShareStatus('Atividades internas não usam localização GPS.');
+    else if (!gpsActivityTypes.has($('mapMode').value)) liveShareStatus('Disponível para atividades ao ar livre com GPS.');
+    else if (!control.checked) liveShareStatus('Sua posição fica privada até você ativar esta opção.');
+  }
+  function stopLiveSharing() {
+    const control = $('mapShareLive');
+    const shouldNotifyServer = liveSharingRequested;
+    control.checked = false;
+    liveSharingRequested = false;
+    lastLiveUpdateAt = 0;
+    if (shouldNotifyServer && getUser()) {
+      queueLiveRequest({ isSharing: false }).catch(() => {});
+      liveShareStatus('Compartilhamento ao vivo encerrado.');
+    } else updateLiveShareAvailability();
+  }
+  function publishLiveLocation(point, force = false) {
+    if (!$('mapShareLive').checked || !trackingActive || !trackingWithGps || !getUser()?.companyId) return;
+    const now = Date.now();
+    if (!force && now - lastLiveUpdateAt < 10000) return;
+    lastLiveUpdateAt = now;
+    liveSharingRequested = true;
+    queueLiveRequest({ isSharing: true, activityType: $('mapMode').value, lat: point.lat, lng: point.lng })
+      .then(() => liveShareStatus('Sua posição está sendo compartilhada com a campanha.'))
+      .catch((error) => {
+        liveSharingRequested = false;
+        $('mapShareLive').checked = false;
+        liveShareStatus(`Não foi possível compartilhar: ${error.message}`);
+      });
+  }
   function addTiles(target) {
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -123,6 +169,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     addTiles(map);
     shownRoute = L.polyline([], { color: '#fa8b45', weight: 5, opacity: 0.9 }).addTo(map);
     routeDistanceDots = L.layerGroup().addTo(map);
+    liveParticipantLayer = L.layerGroup().addTo(map);
     liveRoute = L.polyline([], { color: '#00dfc1', weight: 6, opacity: 0.95 }).addTo(map);
   }
 
@@ -323,7 +370,8 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     mediaFiles.push(...selectedFiles); renderMediaQueue(); return true;
   }
 
-  function clearDraft(clearMedia = true) {
+  function clearDraft(clearMedia = true, resetLiveShare = true) {
+    if (resetLiveShare) stopLiveSharing();
     stopWatch();
     points = [];
     meters = 0;
@@ -347,6 +395,61 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     plannedEndMarker = null;
     if (clearMedia) { mediaFiles = []; renderMediaQueue(); }
     updateStats();
+    onActivityStateChange();
+  }
+
+  function renderLiveParticipants(participants) {
+    const incoming = new Set(participants.map((participant) => String(participant.userId)));
+    for (const [userId, marker] of liveParticipantMarkers) {
+      if (incoming.has(userId)) continue;
+      marker.remove();
+      liveParticipantMarkers.delete(userId);
+    }
+    participants.forEach((participant) => {
+      const userId = String(participant.userId);
+      let marker = liveParticipantMarkers.get(userId);
+      if (!marker) {
+        marker = L.circleMarker([participant.lat, participant.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#ec5364', fillOpacity: 1 }).addTo(liveParticipantLayer);
+        marker.bindTooltip(participant.name, { direction: 'top', opacity: 0.95 });
+        liveParticipantMarkers.set(userId, marker);
+      } else marker.setLatLng([participant.lat, participant.lng]);
+    });
+
+    const list = $('liveActivityList');
+    list.replaceChildren();
+    if (!getUser()?.companyId) {
+      list.textContent = 'Entre em uma campanha para acompanhar participantes ao vivo.';
+      return;
+    }
+    if (!participants.length) {
+      list.textContent = 'Ninguém está compartilhando a localização agora.';
+      return;
+    }
+    participants.forEach((participant) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'map-live-person';
+      const name = document.createElement('strong');
+      name.textContent = participant.name;
+      const detail = document.createElement('small');
+      const seconds = Math.max(0, Math.floor((Date.now() - participant.updatedAt) / 1000));
+      detail.textContent = `${participant.activityType} · atualizado há ${seconds} s`;
+      button.append(name, detail);
+      button.addEventListener('click', () => {
+        map.setView([participant.lat, participant.lng], 16);
+        liveParticipantMarkers.get(String(participant.userId))?.openTooltip();
+      });
+      list.append(button);
+    });
+  }
+
+  async function refreshLiveParticipants() {
+    if (!$('mapView').hidden && getUser()?.companyId) {
+      try {
+        const { participants } = await api('/live-activities');
+        renderLiveParticipants(participants);
+      } catch { /* Live sharing is optional; keep the route recording usable. */ }
+    }
   }
 
   function showRoute(route, type, id, isRoadMatched = false) {
@@ -431,6 +534,8 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       catch (error) { status(error.message); }
     }
     renderLists();
+    updateLiveShareAvailability();
+    refreshLiveParticipants();
   }
 
   function open() {
@@ -442,6 +547,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       $('mapAccuracy').closest('div').hidden = false;
     }
     setTimeout(() => map?.invalidateSize(), 0);
+    if (!liveParticipantTimer) liveParticipantTimer = setInterval(refreshLiveParticipants, 5000);
     refresh();
   }
 
@@ -468,6 +574,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       meters += delta;
     }
     points.push(point);
+    publishLiveLocation(point);
     liveRoute.setLatLngs(smoothRouteForDisplay(points).map((entry) => [entry.lat, entry.lng]));
     if (locationMarker) locationMarker.setLatLng([lat, lng]);
     else locationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#00d9bc', fillOpacity: 1 }).addTo(map);
@@ -481,6 +588,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     if (!trackingActive) return;
     const hadGps = trackingWithGps;
     stopWatch();
+    stopLiveSharing();
     stoppedAt = Date.now();
     disconnectHeartRate();
     $('mapShareRoute').closest('label').hidden = !hadGps;
@@ -489,6 +597,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     status(!hadGps
       ? 'Atividade encerrada. Revise o horário e salve seu registro.'
       : points.length >= 2 ? 'Percurso encerrado. Escolha a atividade e salve.' : 'Percurso encerrado. São necessários pelo menos dois pontos de GPS para salvar.');
+    onActivityStateChange();
   }
 
   function getActivityPlan() {
@@ -501,12 +610,13 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     if (trackLocation && !requireGPS()) return false;
     if (!trackLocation && !getUser()) { showLogin(); return false; }
     ensureMap();
-    clearDraft(false);
+    clearDraft(false, false);
     resetHeartRateStats();
     shownRoute.setLatLngs([]);
     routeDistanceDots.clearLayers();
     if (mode) $('mapMode').value = mode;
     trackingWithGps = trackLocation;
+    updateLiveShareAvailability();
     $('routeMap').hidden = !trackLocation;
     $('noGpsActivityNotice').hidden = trackLocation;
     $('mapLocateButton').hidden = !trackLocation;
@@ -523,6 +633,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     $('mapStartButton').disabled = true;
     $('mapStopButton').disabled = false;
     trackingActive = true;
+    updateLiveShareAvailability();
     if (trackLocation) {
       status('Solicitando acesso à localização… O tempo começará no primeiro ponto de GPS.');
       watchId = navigator.geolocation.watchPosition(onPosition, (error) => {
@@ -534,11 +645,21 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       timerId = setInterval(updateStats, 1000);
       status('Cronômetro ativo, sem localização GPS.');
     }
+    onActivityStateChange();
     return true;
   }
 
   $('mapStartButton').addEventListener('click', () => start(undefined, { trackLocation: gpsActivityTypes.has($('mapMode').value) }));
-  $('mapMode').addEventListener('change', () => { $('mapDistance').closest('div').hidden = !distanceActivityTypes.has($('mapMode').value); });
+  $('mapMode').addEventListener('change', () => {
+    $('mapDistance').closest('div').hidden = !distanceActivityTypes.has($('mapMode').value);
+    updateLiveShareAvailability();
+  });
+  $('mapShareLive').addEventListener('change', () => {
+    updateLiveShareAvailability();
+    if (!$('mapShareLive').checked) { stopLiveSharing(); return; }
+    if (trackingActive && points.length) publishLiveLocation(points.at(-1), true);
+    else liveShareStatus('Sua posição será compartilhada quando a atividade GPS começar.');
+  });
   $('heartRateConnect').addEventListener('click', connectHeartRate);
   $('heartRateDisconnect').addEventListener('click', disconnectHeartRate);
   $('activityHeartRateConnect').addEventListener('click', connectHeartRate);
@@ -598,5 +719,5 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   });
   $('mapDiscardButton').addEventListener('click', () => { clearDraft(); status('Percurso descartado.'); });
 
-  return { open, refresh, start, openActivityPreview, getActivityPlan, queueMediaFiles, connectHeartRate, disconnectHeartRate, stop: stopWatch };
+  return { open, refresh, start, openActivityPreview, getActivityPlan, queueMediaFiles, connectHeartRate, disconnectHeartRate, stop: stopWatch, isActivityVisible: () => trackingActive || !$('mapFinishPanel').hidden };
 }

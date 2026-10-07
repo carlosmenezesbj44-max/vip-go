@@ -27,6 +27,11 @@ const activityTypes = new Set([
 ]);
 let valhallaProcess;
 let shuttingDown = false;
+const liveActivityLocations = new Map();
+const gpsActivityTypes = new Set([
+  'Caminhada', 'Corrida', 'Corrida de rua', 'Corrida em trilha', 'Trilha', 'Ciclismo', 'Mountain bike', 'Patinação',
+  'Canoagem', 'Escalada', 'Surfe', 'Skate', 'Futebol', 'Futsal', 'Basquete', 'Vôlei', 'Tênis', 'Beach tennis', 'Remo',
+]);
 if (isProduction && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
   throw new Error('Defina SESSION_SECRET com pelo menos 32 caracteres antes de iniciar em produção.');
 }
@@ -243,6 +248,46 @@ app.get('/api/maps/routes', authRequired, (req, res) => {
     return route.length >= 2 ? [{ ...activity, routeMatched: JSON.parse(matchedRouteJson || '[]').length >= 2, route }] : [];
   });
   res.json({ routes });
+});
+
+app.post('/api/live-activities/location', authRequired, (req, res) => {
+  const user = publicUser(req.session.userId);
+  if (!user) return res.status(401).json({ error: 'Sua sessão expirou. Entre novamente.' });
+  if (req.body?.isSharing === false) {
+    liveActivityLocations.delete(user.id);
+    return res.json({ sharing: false });
+  }
+  if (!user?.companyId) return res.status(403).json({ error: 'Entre em uma campanha para compartilhar sua posição ao vivo.' });
+  const { activityType, lat, lng } = req.body || {};
+  if (!gpsActivityTypes.has(activityType) || !Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
+    return res.status(400).json({ error: 'Atividade ou localização inválida para o compartilhamento ao vivo.' });
+  }
+  const previous = liveActivityLocations.get(user.id);
+  liveActivityLocations.set(user.id, {
+    userId: user.id,
+    companyId: user.companyId,
+    name: user.name,
+    activityType,
+    lat,
+    lng,
+    startedAt: previous?.startedAt || Date.now(),
+    updatedAt: Date.now(),
+  });
+  res.json({ sharing: true });
+});
+
+app.get('/api/live-activities', authRequired, (req, res) => {
+  const user = publicUser(req.session.userId);
+  if (!user?.companyId) return res.json({ participants: [] });
+  const now = Date.now();
+  const participants = [];
+  for (const [userId, live] of liveActivityLocations) {
+    if (now - live.updatedAt > 35000) { liveActivityLocations.delete(userId); continue; }
+    if (live.userId !== user.id && live.companyId === user.companyId && publicUser(live.userId)?.companyId === live.companyId) {
+      participants.push({ userId: live.userId, name: live.name, activityType: live.activityType, lat: live.lat, lng: live.lng, startedAt: live.startedAt, updatedAt: live.updatedAt });
+    }
+  }
+  res.json({ participants });
 });
 
 app.put('/api/activities/:id/route-visibility', authRequired, (req, res) => {

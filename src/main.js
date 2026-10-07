@@ -285,8 +285,7 @@ document.getElementById('activityList').addEventListener('click', async (event) 
   if (button.dataset.activityAction === 'start') {
     if (!currentUser) { showToast('Entre na sua conta para iniciar uma atividade.'); return; }
     const activityType = activity.activityType || activity.mode;
-    setPage('Mapas');
-    mapsController.start(activityType, { trackLocation: gpsActivityTypes.has(activityType) });
+    if (mapsController.start(activityType, { trackLocation: gpsActivityTypes.has(activityType) })) setPage('Atividades');
     return;
   }
   if (button.dataset.activityAction === 'edit') {
@@ -1057,18 +1056,31 @@ function setPage(page) {
       : page === 'Desafios' ? section.dataset.section !== 'Desafios' : page === 'Perfil' || page === 'Admin' || page === 'Mapas' || page === 'Comunidade' || page === 'Calendário';
   });
   document.querySelector('.content-grid').hidden = page === 'Perfil' || page === 'Admin' || page === 'Mapas' || page === 'Comunidade' || page === 'Calendário';
-  document.getElementById('mapView').hidden = page !== 'Mapas';
+  const showActivityMap = page === 'Atividades' && mapsController?.isActivityVisible();
+  document.getElementById('mapView').hidden = page !== 'Mapas' && !showActivityMap;
+  document.getElementById('mapView').classList.toggle('map-view--inline', Boolean(showActivityMap));
   document.getElementById('profileView').hidden = page !== 'Perfil';
   document.getElementById('adminView').hidden = page !== 'Admin';
   if (page === 'Comunidade') loadCommunityDirectory(document.getElementById('communitySearch').value.trim());
   if (page === 'Perfil') setProfileTab('account');
   if (page === 'Admin') setAdminTab('overview');
-  if (page === 'Mapas') mapsController.open();
+  if (page === 'Mapas' || showActivityMap) mapsController.open();
   if (page === 'Calendário') renderCalendar();
 }
 
 // Start on the community home with every route-specific section synchronized.
-mapsController = createMapsController({ api, readActivities, loadAccountData, showToast, getUser: () => currentUser, showLogin: () => document.getElementById('accountButton').click() });
+mapsController = createMapsController({
+  api, readActivities, loadAccountData, showToast, getUser: () => currentUser,
+  showLogin: () => document.getElementById('accountButton').click(),
+  onActivityStateChange: () => {
+    if (document.body.dataset.page !== 'Atividades') return;
+    const show = mapsController?.isActivityVisible();
+    const mapView = document.getElementById('mapView');
+    mapView.hidden = !show;
+    mapView.classList.toggle('map-view--inline', Boolean(show));
+    if (show) mapsController.open();
+  },
+});
 setPage('Início');
 
 function setProfileTab(name) {

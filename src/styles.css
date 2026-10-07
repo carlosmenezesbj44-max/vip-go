@@ -440,6 +440,16 @@ body[data-page="Início"] .welcome p{font-size:13px}
 .map-live-stats>div{min-width:120px;padding:12px 16px;border:1px solid #295d50;border-radius:13px;background:#0b3b31}
 .map-live-stats small{display:block;color:#a3c6b8;font-size:10px;margin-bottom:4px}
 .map-live-stats strong{font:800 17px 'Manrope'}
+.map-live-share{display:flex;align-items:flex-start;gap:11px;width:max-content;max-width:100%;padding:12px 15px;border:1px solid #2e6256;border-radius:13px;background:#0b382f;color:#e8fff4}
+.map-live-share input{width:18px;height:18px;margin:1px 0 0;accent-color:#00d9bc;flex:none}
+.map-live-share strong,.map-live-share small{display:block}
+.map-live-share strong{font-size:12px}
+.map-live-share small{margin-top:3px;color:#a5c0b5;font-size:11px;line-height:1.4}
+.map-live-share:has(input:disabled){opacity:.68}
+.map-view--inline{margin-top:18px;padding-top:19px;border-top:1px solid #245046}
+.map-view--inline .map-heading{display:none}
+.map-view--inline .map-lists{display:none}
+.map-view--inline .route-map{height:min(47vh,440px);min-height:290px}
 .route-map{height:min(60vh,570px);min-height:360px;border-radius:20px;overflow:hidden;border:1px solid #397666;background:#dce9e2;z-index:0}
 .route-map .leaflet-control-attribution{font-size:10px}
 .map-finish{padding:22px;display:grid;gap:14px}
@@ -461,7 +471,12 @@ body[data-page="Início"] .welcome p{font-size:13px}
 .map-route-open strong{font-size:12px}
 .map-route-open small{color:#658175;font-size:11px}
 .map-route-visibility{border:1px solid #c6ded2;border-radius:9px;background:#eff9f2;color:#126d56;padding:8px 10px;font-size:10px;font-weight:800}
+.map-live-person{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:11px 20px;border:0;border-top:1px solid #e3efe8;background:transparent;color:#123d32;text-align:left;cursor:pointer}
+.map-live-person:hover{background:#e9faf1}
+.map-live-person strong{font-size:12px}
+.map-live-person small{color:#658175;font-size:10px;text-align:right}
 @media(max-width:720px){.mobile-nav{grid-template-columns:repeat(4,minmax(0,1fr))}.mobile-nav button{font-size:10px}.map-heading{align-items:start;flex-direction:column}.map-heading h1{font-size:29px}.map-toolbar{display:grid;grid-template-columns:1fr 1fr}.map-toolbar .primary{grid-column:1/-1}.map-toolbar button,.map-media-button{white-space:normal;min-width:0;padding:11px 8px;font-size:10px}.map-media-button{grid-column:1/-1}.map-live-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.map-live-stats>div{min-width:0;padding:10px}.map-live-stats strong{font-size:13px}.route-map{min-height:390px;height:55vh}.map-lists{grid-template-columns:1fr}}
+@media(max-width:720px){.map-live-share{width:100%;padding:12px}.map-view--inline{margin-top:16px;padding-top:16px}.map-view--inline .route-map{min-height:300px;height:43vh}.map-live-person{padding:11px 16px}}
 @media(max-width:720px){.calendar-page-heading{align-items:flex-start;flex-direction:column}.calendar-page-heading .calendar-register-button{width:100%}.calendar-summary{gap:7px}.calendar-summary article{padding:13px 10px}.calendar-summary article span{font-size:10px}.calendar-summary article strong{font-size:17px}.calendar-content-grid{grid-template-columns:minmax(0,1fr);gap:12px}.calendar-month-card,.calendar-day-card{padding:14px}.calendar-weekdays,.calendar-days{gap:3px}.calendar-day,.calendar-day-placeholder{border-radius:9px}.calendar-day{font-size:12px}.calendar-day small{font-size:7px;right:3px;top:2px}.calendar-legend{align-items:flex-start;flex-wrap:wrap}.calendar-legend small{width:100%;margin-left:0}}
 
 /* Keep the sidebar account visible on short desktop viewports. */
