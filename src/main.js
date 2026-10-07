@@ -1585,23 +1585,80 @@ function setChallengeDefaultDates() {
   end.setDate(end.getDate() + (period === 'monthly' ? 29 : 6));
   document.getElementById('challengeStartsInput').value = localDateInputValue(start);
   document.getElementById('challengeEndsInput').value = localDateInputValue(end);
+  renderChallengePreview();
 }
 
 document.getElementById('challengePeriodInput').addEventListener('change', setChallengeDefaultDates);
 setChallengeDefaultDates();
 let challengeCoverPreviewUrl = null;
+const challengeCoverDropzone = document.getElementById('challengeCoverDropzone');
+['dragenter', 'dragover'].forEach((eventName) => {
+  challengeCoverDropzone.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    challengeCoverDropzone.classList.add('is-dragging');
+  });
+});
+['dragleave', 'dragend'].forEach((eventName) => {
+  challengeCoverDropzone.addEventListener(eventName, () => challengeCoverDropzone.classList.remove('is-dragging'));
+});
+challengeCoverDropzone.addEventListener('drop', (event) => {
+  event.preventDefault();
+  challengeCoverDropzone.classList.remove('is-dragging');
+  const file = event.dataTransfer?.files?.[0];
+  if (!file) return;
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  document.getElementById('challengeCoverInput').files = transfer.files;
+  document.getElementById('challengeCoverInput').dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+function renderChallengePreview() {
+  const title = document.getElementById('challengeTitleInput').value.trim();
+  const description = document.getElementById('challengeDescriptionInput').value.trim();
+  const reward = document.getElementById('challengeRewardInput').value.trim();
+  const goal = Number(document.getElementById('challengeGoalInput').value) || 150;
+  const period = document.getElementById('challengePeriodInput').value;
+  const startsOn = document.getElementById('challengeStartsInput').value;
+  const endsOn = document.getElementById('challengeEndsInput').value;
+  const formatDate = (value) => value ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(`${value}T12:00:00`)) : '';
+  document.getElementById('challengePreviewTitle').textContent = title || 'Seu desafio começa aqui';
+  document.getElementById('challengePreviewDescription').textContent = description || 'A descrição do desafio aparecerá neste espaço.';
+  document.getElementById('challengePreviewGoal').textContent = `${goal.toLocaleString('pt-BR')} min`;
+  document.getElementById('challengePreviewDates').textContent = startsOn && endsOn ? `${formatDate(startsOn)} a ${formatDate(endsOn)} · ${period === 'monthly' ? 'Mensal' : 'Semanal'}` : 'Defina o período';
+  document.getElementById('challengePreviewReward').textContent = reward || 'Sua recompensa pode aparecer aqui.';
+}
+
+['challengeTitleInput', 'challengeDescriptionInput', 'challengeGoalInput', 'challengeRewardInput', 'challengeStartsInput', 'challengeEndsInput'].forEach((id) => {
+  document.getElementById(id).addEventListener('input', renderChallengePreview);
+  document.getElementById(id).addEventListener('change', renderChallengePreview);
+});
+document.getElementById('challengePeriodInput').addEventListener('change', renderChallengePreview);
+
 document.getElementById('challengeCoverInput').addEventListener('change', (event) => {
   const file = event.target.files[0];
   const preview = document.getElementById('challengeCoverPreview');
   const help = document.getElementById('challengeCoverHelp');
+  const coverImage = document.getElementById('challengePreviewImage');
+  const cover = document.getElementById('challengePreviewCover');
+  const wordmark = document.getElementById('challengePreviewWordmark');
   if (challengeCoverPreviewUrl) URL.revokeObjectURL(challengeCoverPreviewUrl);
   challengeCoverPreviewUrl = null;
   preview.replaceChildren();
-  if (!file) { preview.hidden = true; help.textContent = 'JPEG, PNG ou WebP · até 5 MB'; return; }
+  if (!file) {
+    preview.hidden = true;
+    help.textContent = 'JPEG, PNG ou WebP · até 5 MB';
+    coverImage.hidden = true;
+    cover.classList.add('is-placeholder');
+    wordmark.hidden = false;
+    return;
+  }
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
     event.target.value = '';
     preview.hidden = true;
     help.textContent = 'Escolha JPEG, PNG ou WebP de até 5 MB.';
+    coverImage.hidden = true;
+    cover.classList.add('is-placeholder');
+    wordmark.hidden = false;
     showToast('A capa deve ser JPEG, PNG ou WebP e ter até 5 MB.');
     return;
   }
@@ -1611,6 +1668,10 @@ document.getElementById('challengeCoverInput').addEventListener('change', (event
   image.alt = 'Prévia da capa do desafio';
   preview.append(image);
   preview.hidden = false;
+  coverImage.src = challengeCoverPreviewUrl;
+  coverImage.hidden = false;
+  cover.classList.remove('is-placeholder');
+  wordmark.hidden = true;
   help.textContent = `${file.name} · pronto para publicar`;
 });
 
@@ -1648,6 +1709,8 @@ document.getElementById('createChallengeButton').addEventListener('click', async
     document.getElementById('challengeCoverHelp').textContent = 'JPEG, PNG ou WebP · até 5 MB';
     if (challengeCoverPreviewUrl) URL.revokeObjectURL(challengeCoverPreviewUrl);
     challengeCoverPreviewUrl = null;
+    document.getElementById('challengeCoverInput').dispatchEvent(new Event('change'));
+    renderChallengePreview();
     await loadAccountData();
     showToast('Desafio publicado e visível para os participantes.');
   } catch (error) { showToast(error.message); }

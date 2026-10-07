@@ -66,6 +66,90 @@ body{background:radial-gradient(ellipse at 12% 0%,#0d5346 0,transparent 36%),rad
 .challenge-cover-preview img{width:100%;height:100%;object-fit:cover}
 .admin-challenge-thumb{width:66px;height:48px;object-fit:cover;border-radius:8px;margin-bottom:3px}
 @media(max-width:720px){.participant-challenge-featured{grid-template-columns:1fr}.participant-challenge-content{padding:18px}.participant-challenge-content .participant-challenge-heading h3{font-size:17px}.participant-challenge-cover,.participant-challenge-cover img{min-height:175px}.participant-challenge-cover.is-placeholder strong{font-size:54px}}
+.challenge-admin-panel{display:grid;gap:18px}
+.challenge-workspace{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(330px,.85fr);gap:18px;align-items:start}
+.challenge-workspace .admin-challenges{max-width:none;padding:0 24px 24px;border:1px solid #d6ece2;border-radius:20px}
+.challenge-builder-heading{display:flex;align-items:center;gap:14px;margin:0 -24px 4px;padding:22px 24px;border-bottom:1px solid #e2efe8;background:linear-gradient(115deg,#f0fff8,#e5f7ef)}
+.challenge-builder-icon{width:44px;height:44px;display:grid;place-items:center;flex:none;border-radius:14px;background:linear-gradient(145deg,#1cbd98,#00a88e);color:white;font-size:22px;box-shadow:0 7px 16px #079b792b}
+.challenge-builder-heading .eyebrow{font-size:9px;letter-spacing:1.35px}
+.challenge-builder-heading h2{margin:5px 0 3px;color:#143d31;font:800 21px 'Manrope';letter-spacing:-.5px}
+.challenge-builder-heading p{margin:0;color:#799286;font-size:11px}
+.challenge-form-section{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;padding:18px 0;border-bottom:1px solid #e8f0eb}
+.challenge-section-number{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:#e9f8f1;color:#078d78;font:800 11px 'Manrope'}
+.challenge-form-section-content{min-width:0}
+.challenge-form-section-content h3{margin:1px 0 4px;color:#1b4034;font:800 13px 'Manrope'}
+.challenge-form-section-content>p{margin:0 0 11px;color:#82968a;font-size:10px;line-height:1.45}
+.challenge-workspace .admin-challenges label{margin:10px 0;color:#466354;font-size:10px}
+.challenge-workspace .admin-challenges input:not([type=file]),.challenge-workspace .admin-challenges select,.challenge-workspace .admin-challenges textarea{padding:12px 13px;border:1px solid #d9e8df;border-radius:11px;background:#fbfefc;color:#163b30;font:500 12px 'DM Sans';transition:border-color .18s,box-shadow .18s,background .18s}
+.challenge-workspace .admin-challenges input:focus,.challenge-workspace .admin-challenges select:focus,.challenge-workspace .admin-challenges textarea:focus{outline:none;border-color:#40c9a5;background:#fff;box-shadow:0 0 0 3px #38c9a51f}
+.challenge-workspace .admin-challenges textarea{min-height:84px;resize:vertical}
+.challenge-workspace .admin-challenges .form-row{gap:12px}
+.challenge-cover-dropzone{position:relative;display:grid;justify-items:center;gap:5px;padding:15px;border:1px dashed #9fcfbb;border-radius:13px;background:#f4fbf7;text-align:center;transition:background .18s,border-color .18s}
+.challenge-cover-dropzone:hover{border-color:#1db68e;background:#eaf8f1}
+.challenge-cover-upload-icon{width:31px;height:31px;display:grid;place-items:center;border-radius:10px;background:#dff5eb;color:#078d78;font-size:20px}
+.challenge-cover-dropzone strong{color:#245345;font-size:11px}
+.challenge-cover-dropzone small{margin:0;color:#879b8f;font-size:9px}
+.challenge-cover-dropzone input[type=file]{position:absolute;inset:0;width:100%;height:100%;margin:0!important;padding:0!important;opacity:0;cursor:pointer}
+.challenge-cover-preview{height:105px;border:1px solid #d9e8df}
+.challenge-publish-button{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:18px;padding:14px;border:0;border-radius:12px;background:linear-gradient(100deg,#75efd3,#29d5ad);color:#063329;font:800 12px 'Manrope';box-shadow:0 9px 22px #08a88121;transition:transform .18s,box-shadow .18s}
+.challenge-publish-button:hover{transform:translateY(-1px);box-shadow:0 12px 25px #08a88135}
+.challenge-publish-button:disabled{opacity:.65;transform:none;cursor:wait}
+.optional-label{color:#9aae9f;font-size:9px;font-weight:500}
+.challenge-compose-preview{position:sticky;top:18px;min-width:0;padding:19px;border:1px solid #286453;border-radius:20px;background:radial-gradient(ellipse at 100% 0,#14866b38,transparent 45%),linear-gradient(145deg,#0c4035,#092d27);box-shadow:0 14px 34px #001a142b}
+.challenge-preview-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
+.challenge-preview-heading .eyebrow{font-size:8px;letter-spacing:1.15px}
+.challenge-preview-heading h2{margin:5px 0 0;color:#f0fff7;font:800 16px 'Manrope'}
+.challenge-preview-live{display:flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid #42927a;border-radius:999px;color:#d6ffec;font-size:9px;font-weight:700}
+.challenge-preview-live i{width:6px;height:6px;border-radius:50%;background:#54e1ad;box-shadow:0 0 9px #54e1ad}
+.challenge-preview-card{display:grid;grid-template-columns:minmax(150px,.88fr) minmax(0,1.3fr);min-height:255px;overflow:hidden;border-radius:14px;background:#f6fbf7;color:#173c31;box-shadow:0 8px 20px #00150f26}
+.challenge-preview-copy{display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:16px 14px}
+.challenge-preview-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border-radius:8px;background:#fff0dc;color:#b16214;font-size:9px}
+.challenge-preview-badge b{font:800 10px 'Manrope'}
+.challenge-preview-copy h3{margin:2px 0 0;color:#143d31;font:800 17px/1.2 'Manrope';overflow-wrap:anywhere}
+.challenge-preview-copy>p{margin:0;color:#70897d;font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.challenge-preview-fact,.challenge-preview-reward{display:flex;gap:6px;color:#4b685b;font-size:9px;line-height:1.4}
+.challenge-preview-reward{color:#398162}
+.challenge-preview-copy>button{width:100%;margin-top:auto;padding:9px 7px;border:0;border-radius:7px;background:#078d78;color:white;font-size:9px;font-weight:800;opacity:1;cursor:default}
+.challenge-preview-cover{position:relative;min-height:255px;overflow:hidden;background:#073d32}
+.challenge-preview-cover.is-placeholder{display:grid;place-items:center;background:radial-gradient(ellipse at 65% 35%,#2cc89a,transparent 38%),linear-gradient(135deg,#ef9930,#e26d2a 48%,#a64227)}
+.challenge-preview-cover.is-placeholder:before{content:"";position:absolute;inset:14% 9%;border:4px solid #fff9;border-radius:50%;transform:rotate(-8deg)}
+.challenge-preview-cover strong{position:relative;z-index:1;color:white;font:800 clamp(26px,3vw,44px) 'Manrope';letter-spacing:-2px;text-shadow:0 3px 14px #57250b55}
+.challenge-preview-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.challenge-preview-note{margin:10px 2px 0;color:#a8c9bb;font-size:9px;line-height:1.5}
+.challenge-form-section{position:relative}
+.challenge-form-section:not(:last-of-type)::before{content:"";position:absolute;left:14px;top:49px;bottom:-1px;width:1px;background:linear-gradient(#c8e8d9,#e8f0eb);pointer-events:none}
+.challenge-section-number{position:relative;z-index:1;border:1px solid #d8eee4;box-shadow:0 0 0 4px #f2faf5}
+.challenge-workspace .admin-challenges label{line-height:1.45}
+.challenge-workspace .admin-challenges input:not([type=file]),.challenge-workspace .admin-challenges select,.challenge-workspace .admin-challenges textarea{min-height:44px}
+.challenge-workspace .admin-challenges input::placeholder,.challenge-workspace .admin-challenges textarea::placeholder{color:#9aada3}
+.challenge-workspace .admin-challenges textarea{min-height:90px;line-height:1.55}
+.challenge-cover-dropzone{min-height:110px;align-content:center;cursor:pointer;outline:none}
+.challenge-cover-dropzone:focus-within{border-color:#13a98e;box-shadow:0 0 0 3px #21b99724;background:#effbf5}
+.challenge-cover-dropzone.is-dragging{border-color:#078d78;background:#e3f8ed;box-shadow:0 0 0 4px #21b99724;transform:translateY(-1px)}
+.challenge-cover-dropzone input[type=file]{z-index:2}
+.challenge-cover-preview{height:94px;margin-top:8px;border-radius:11px;box-shadow:0 4px 12px #12432b0d}
+.challenge-cover-preview img{display:block}
+.challenge-preview-copy{gap:10px}
+.challenge-preview-fact,.challenge-preview-reward{align-items:flex-start}
+.challenge-preview-note{display:flex;align-items:center;gap:7px}
+.challenge-preview-note::before{content:"🔒";font-size:11px}
+.admin-challenges-list{border:1px solid #dcebe2}
+.challenge-publish-button:focus-visible,.challenge-workspace .admin-challenges input:focus-visible,.challenge-workspace .admin-challenges select:focus-visible,.challenge-workspace .admin-challenges textarea:focus-visible{outline:3px solid #47d5b2;outline-offset:2px}
+.admin-challenges-list{max-width:none;padding:20px 24px}
+.admin-challenges-list .goal-heading{margin-bottom:10px}
+.admin-challenges-list .goal-heading h2{margin:5px 0 0}
+.admin-challenges-list .goal-heading p{margin:4px 0 0}
+@media(max-width:1000px){.challenge-workspace{grid-template-columns:minmax(0,1fr) minmax(280px,.8fr);gap:13px}.challenge-workspace .admin-challenges{padding-inline:18px}.challenge-builder-heading{margin-inline:-18px;padding-inline:18px}.challenge-preview-card{grid-template-columns:minmax(135px,.9fr) minmax(0,1fr)}.challenge-preview-copy{padding:13px 11px}.challenge-preview-copy h3{font-size:15px}}
+@media(max-width:760px){.challenge-workspace{grid-template-columns:1fr}.challenge-compose-preview{position:static;grid-row:1}.challenge-preview-card{grid-template-columns:minmax(145px,.8fr) minmax(0,1.2fr);min-height:230px}.challenge-preview-cover{min-height:230px}.challenge-preview-copy{padding:17px}.challenge-preview-copy h3{font-size:18px}}
+@media(max-width:480px){.challenge-workspace .admin-challenges{padding-inline:15px}.challenge-builder-heading{margin-inline:-15px;padding:17px 15px}.challenge-form-section{grid-template-columns:27px minmax(0,1fr);gap:9px;padding:15px 0}.challenge-section-number{width:26px;height:26px}.challenge-workspace .admin-challenges .form-row{grid-template-columns:1fr;gap:0}.challenge-compose-preview{padding:14px}.challenge-preview-card{grid-template-columns:1fr}.challenge-preview-copy{padding:16px}.challenge-preview-cover{grid-row:1;min-height:150px}.challenge-preview-cover strong{font-size:38px}.challenge-preview-copy h3{font-size:17px}.admin-challenges-list{padding:17px 15px}}
+.participant-challenge-cover.is-placeholder,.challenge-preview-cover.is-placeholder{background:radial-gradient(ellipse at 67% 35%,#34d3a0 0,transparent 38%),linear-gradient(135deg,#0a7058,#087b69 48%,#0b3d36)}
+.participant-challenge-cover.is-placeholder:before,.challenge-preview-cover.is-placeholder:before{border-color:#d8fff0c9}
+.challenge-preview-copy>p{color:#526e62;font-size:11px}
+.challenge-preview-fact,.challenge-preview-reward{color:#405f51;font-size:10px}
+.challenge-preview-reward{color:#267451}
+.challenge-preview-note{color:#c1ded1;font-size:10px}
+.challenge-preview-heading .eyebrow{font-size:9px}
+@media(max-width:760px){.challenge-compose-preview{grid-row:auto}}
 .admin-heading-actions{display:flex;align-items:center;gap:10px}.admin-create-challenge-button{border:0;border-radius:10px;background:linear-gradient(105deg,#75efd3,#25d8b1);color:#052a23;padding:11px 15px;font-size:11px;font-weight:800;white-space:nowrap}.admin-create-challenge-button:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .admin-admins{max-width:900px}.admin-create-admin-form{display:grid;gap:10px}.admin-create-admin-form label{display:block;margin:0;color:#3b4e64;font-size:11px;font-weight:700}.admin-create-admin-form input{width:100%;display:block;border:1px solid #dce5ed;border-radius:10px;background:white;padding:11px 12px;margin-top:7px;font:500 12px 'DM Sans';color:#15352d}.admin-admin-help{margin:0;color:#779285;font-size:10px;line-height:1.55}.admin-admin-entry{display:flex;align-items:center;gap:11px;min-width:0}.admin-admin-entry-copy{display:grid;gap:3px;min-width:0}.admin-admin-entry-copy strong{font-size:12px}.admin-admin-entry-copy span{font-size:10px;font-weight:500;color:#779285;overflow-wrap:anywhere}.admin-primary-badge{flex:none;border-radius:999px;padding:5px 8px;background:#e5f8e4;color:#3a7b3c;font-size:9px;font-weight:800}
 .accept-challenge-button{border:0;border-radius:9px;background:#078d78;color:#fff;padding:10px 13px;font-size:11px;font-weight:800}.accept-challenge-button:hover{background:#057661}.accept-challenge-button:disabled{opacity:.6;cursor:wait}.challenge-invitation-copy{margin:12px 0!important}
