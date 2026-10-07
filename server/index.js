@@ -57,6 +57,16 @@ function publicUser(id) {
   return statements.publicUserById.get(id);
 }
 
+function establishUserSession(req, userId) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((regenerateError) => {
+      if (regenerateError) return reject(regenerateError);
+      req.session.userId = userId;
+      req.session.save((saveError) => saveError ? reject(saveError) : resolve());
+    });
+  });
+}
+
 function campaignAdminRequired(req, res, next) {
   const user = publicUser(req.session.userId);
   const campaign = user?.companyId ? statements.campaignByCompany.get(user.companyId) : null;
@@ -200,9 +210,10 @@ app.post('/api/auth/register', async (req, res, next) => {
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'Já existe uma conta com este e-mail.' });
       throw error;
     }
-    req.session.userId = Number(result.lastInsertRowid);
-    if (company) statements.claimCampaignAdmin.run(req.session.userId, company.id);
-    res.status(201).json({ user: publicUser(req.session.userId) });
+    const userId = Number(result.lastInsertRowid);
+    await establishUserSession(req, userId);
+    if (company) statements.claimCampaignAdmin.run(userId, company.id);
+    res.status(201).json({ user: publicUser(userId) });
   } catch (error) { next(error); }
 });
 
@@ -212,7 +223,7 @@ app.post('/api/auth/login', async (req, res, next) => {
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     const user = statements.userByEmail.get(email);
     if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
-    req.session.userId = user.id;
+    await establishUserSession(req, user.id);
     res.json({ user: publicUser(user.id) });
   } catch (error) { next(error); }
 });
@@ -225,6 +236,7 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
+  if (req.session.userId) liveActivityLocations.delete(req.session.userId);
   req.session.destroy((error) => {
     if (error) return res.status(500).json({ error: 'Não foi possível sair da conta.' });
     res.clearCookie('vipgo.sid', { httpOnly: true, sameSite: 'lax', secure: secureCookies });
