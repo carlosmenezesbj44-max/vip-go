@@ -594,8 +594,10 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     distanceMilestoneTimer = setTimeout(() => {
       distanceMilestoneElement.classList.remove('is-visible');
       distanceMilestoneTimer = setTimeout(() => {
-        if (!distanceMilestoneQueue.length) distanceMilestoneElement.hidden = true;
-        else showNextDistanceMilestone();
+        if (!distanceMilestoneQueue.length) {
+          distanceMilestoneElement.hidden = true;
+          distanceMilestoneTimer = null;
+        } else showNextDistanceMilestone();
       }, 260);
     }, 1700);
   }
