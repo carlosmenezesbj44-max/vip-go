@@ -920,9 +920,9 @@ body[data-page="Início"] .welcome p{font-size:13px}
 .admin-account-actions{gap:7px}
 .admin-participant-edit .password-visibility-toggle{min-height:36px!important;width:36px;padding:0!important}
 .admin-participant-edit .password-visibility-toggle svg{width:18px;height:18px}
-.community-carousel-heading .eyebrow{display:none}.community-carousel-heading h2{font-size:21px;letter-spacing:-.45px}.community-carousel-heading p{font-size:11px;color:var(--paper-muted)}
+.community-carousel-heading .eyebrow{display:none}.community-carousel-heading h2{font-size:21px;letter-spacing:-.45px}.community-carousel-heading p{font-size:12px;color:var(--paper-muted)}
 .calendar-day.is-selected{background:#dff3e9!important;color:#12483a!important;box-shadow:inset 0 0 0 2px #2fa681!important}
-@media(max-width:720px){.community-carousel-heading h2{font-size:20px}.community-carousel-heading p{font-size:11px}.community-carousel-track:empty{min-height:0;padding:0}.community-carousel-controls:has(+ .community-carousel-track:empty){display:none}}
+@media(max-width:720px){.community-carousel-heading h2{font-size:20px}.community-carousel-heading p{font-size:12px}.community-carousel-track:empty{min-height:0;padding:0}.community-carousel-controls:has(+ .community-carousel-track:empty){display:none}}
 .admin-account-action{min-height:40px;padding:9px 12px;border-color:#d7e9df;border-radius:10px;font-size:10px;white-space:nowrap}
 .admin-account-action:focus-visible,.admin-create-challenge-button:focus-visible{outline:3px solid #40c9a5;outline-offset:2px}
 .admin-participant-edit{gap:13px;padding:17px;border:1px solid #e1eee7;border-radius:12px;background:#f6faf7}
