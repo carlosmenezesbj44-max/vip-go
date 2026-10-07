@@ -1170,3 +1170,25 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
  .calendar-summary{gap:0}
  .calendar-summary article span{font-size:11px}
 }
+
+/* Compact activity preview */
+.activity-view-dialog{width:min(620px,calc(100% - 28px));max-width:620px;max-height:min(78vh,650px);padding:0;overflow:auto;border:0;border-radius:22px;background:var(--surface,#f5fbf8);color:var(--ink,#073d36);box-shadow:0 24px 80px rgba(0,34,29,.28)}
+.activity-view-dialog::backdrop{background:rgba(0,30,25,.58);backdrop-filter:blur(4px)}
+.activity-view-dialog article{padding:22px 24px 24px}
+.activity-view-heading{display:flex;align-items:center;gap:12px}
+.activity-view-heading h2{margin:3px 0 2px;font-size:1.35rem}
+.activity-view-heading .subtle{margin:0;font-size:.78rem}
+.activity-view-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#dff7ee;font-size:1.45rem}
+.activity-view-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 10px}
+.activity-view-stat{padding:11px 12px;border:1px solid #cbe9dd;border-radius:12px;background:#fff}
+.activity-view-stat small{display:block;color:#679087;font-size:.7rem;margin-bottom:3px}
+.activity-view-stat strong{font-size:.92rem}
+.activity-view-heart{margin:8px 0 12px;padding:8px 11px;border-radius:9px;background:#e7f7ef;color:#087e6d;font-size:.78rem}
+.activity-view-section{margin-top:14px;padding-top:14px;border-top:1px solid #d5ece3}
+.activity-view-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:.82rem}
+.activity-view-section-head span{color:#78978f;font-size:.72rem}
+.activity-view-map{height:170px;border-radius:13px;overflow:hidden;border:1px solid #cae5dc;background:#dcefe8}
+.activity-view-media{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.activity-view-media img,.activity-view-media video{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#dcefe8}
+.activity-action-view{border-color:#a8e7d7;background:#effbf7;color:#087e6d}
+@media (max-width:640px){.activity-view-dialog{width:calc(100% - 20px);max-height:82vh}.activity-view-dialog article{padding:18px}.activity-view-stats{gap:6px}.activity-view-stat{padding:9px 8px}.activity-view-stat strong{font-size:.78rem}.activity-view-map{height:150px}}

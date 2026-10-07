@@ -1,4 +1,5 @@
 import { createMapsController } from './maps.js';
+import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
 import { setupPasswordVisibility } from './password-visibility.js';
 import '../assets/vendor/leaflet/leaflet.css';
 
@@ -12,6 +13,8 @@ let campaignData = null;
 let mapsController;
 let activityCache = null;
 let editingActivityId = null;
+let activityViewMap;
+let activityViewRouteLayer;
 let communityPhotoFiles = [];
 let communityCommentState = new Map();
 let activeCommunityId = null;
@@ -109,7 +112,7 @@ function renderActivities() {
     const hasDistance = distanceActivityTypes.has(activityType) && activity.distanceKm > 0;
     const heartRateSummary = activity.averageHeartRate ? ` · FC ${activity.averageHeartRate} média / ${activity.maxHeartRate} máx.` : '';
     item.dataset.activityId = activity.id;
-    item.innerHTML = `<div class="activity-main"><div class="activity-icon" aria-hidden="true">${activitySymbol(activityType)}</div><div class="activity-copy"><h3>${escapeHtml(activityType)}</h3><p>${escapeHtml(`${date} · ${timeRange}`)}</p></div><div class="activity-metrics"><strong>${escapeHtml(hasDistance ? distance : formatDuration(activity.durationSeconds))}</strong><small>${escapeHtml(`${hasDistance ? formatDuration(activity.durationSeconds) : 'Duração'}${heartRateSummary}`)}</small></div></div><div class="activity-actions" aria-label="Ações da atividade"><button type="button" class="activity-action activity-action-start" data-activity-action="start">▶ Iniciar</button><button type="button" class="activity-action" data-activity-action="edit">Editar</button><button type="button" class="activity-action activity-action-media" data-activity-action="media">＋ Foto/vídeo</button><button type="button" class="activity-action activity-action-delete" data-activity-action="delete">Excluir</button></div>`;
+    item.innerHTML = `<div class="activity-main"><div class="activity-icon" aria-hidden="true">${activitySymbol(activityType)}</div><div class="activity-copy"><h3>${escapeHtml(activityType)}</h3><p>${escapeHtml(`${date} · ${timeRange}`)}</p></div><div class="activity-metrics"><strong>${escapeHtml(hasDistance ? distance : formatDuration(activity.durationSeconds))}</strong><small>${escapeHtml(`${hasDistance ? formatDuration(activity.durationSeconds) : 'Duração'}${heartRateSummary}`)}</small></div></div><div class="activity-actions" aria-label="Ações da atividade"><button type="button" class="activity-action activity-action-view" data-activity-action="view">◉ Visualizar</button><button type="button" class="activity-action activity-action-start" data-activity-action="start">▶ Iniciar</button><button type="button" class="activity-action" data-activity-action="edit">Editar</button><button type="button" class="activity-action activity-action-media" data-activity-action="media">＋ Foto/vídeo</button><button type="button" class="activity-action activity-action-delete" data-activity-action="delete">Excluir</button></div>`;
     list.append(item);
   });
   if (!activities.length) {
@@ -285,6 +288,10 @@ document.getElementById('activityList').addEventListener('click', async (event) 
   if (!button) return;
   const activity = readActivities().find((item) => item.id === button.closest('[data-activity-id]')?.dataset.activityId);
   if (!activity) return;
+  if (button.dataset.activityAction === 'view') {
+    openActivityView(activity);
+    return;
+  }
   if (button.dataset.activityAction === 'start') {
     if (!currentUser) { showToast('Entre na sua conta para iniciar uma atividade.'); return; }
     const activityType = activity.activityType || activity.mode;
@@ -1445,6 +1452,52 @@ document.getElementById('accountButton').addEventListener('click', async () => {
   } catch (error) { showToast(error.message); }
 });
 
+const activityViewDialog = document.getElementById('activityViewDialog');
+function mediaSource(item) { return item?.url || item?.data || ''; }
+function openActivityView(activity) {
+  const type = activity.activityType || activity.mode || 'Atividade';
+  const started = new Date(activity.startedAt);
+  const ended = new Date(started.getTime() + Number(activity.durationSeconds || 0) * 1000);
+  const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(started);
+  document.getElementById('activityViewTitle').textContent = type;
+  document.getElementById('activityViewDate').textContent = date;
+  document.getElementById('activityViewIcon').textContent = activitySymbol(type);
+  document.getElementById('activityViewStats').innerHTML = [
+    ['Duração', formatDuration(Number(activity.durationSeconds || 0))],
+    ['Distância', Number(activity.distanceKm || 0) > 0 ? `${formatNumber(activity.distanceKm)} km` : '—'],
+    ['Horário', `${new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' }).format(started)}–${new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' }).format(ended)}`],
+  ].map(([label, value]) => `<div class="activity-view-stat"><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></div>`).join('');
+  const heart = document.getElementById('activityViewHeartRate');
+  heart.hidden = !activity.averageHeartRate;
+  if (activity.averageHeartRate) heart.textContent = `♥ FC média ${activity.averageHeartRate} bpm${activity.maxHeartRate ? ` · máx. ${activity.maxHeartRate} bpm` : ''}`;
+  const route = Array.isArray(activity.route) ? activity.route.filter((point) => Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lng))) : [];
+  const routeSection = document.getElementById('activityViewRouteSection');
+  routeSection.hidden = route.length < 2;
+  if (route.length >= 2) {
+    if (!activityViewMap) {
+      activityViewMap = L.map('activityViewMap', { zoomControl: false, attributionControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false });
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(activityViewMap);
+    }
+    if (activityViewRouteLayer) activityViewRouteLayer.remove();
+    activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
+    activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
+    setTimeout(() => activityViewMap.invalidateSize(), 50);
+  }
+  const media = document.getElementById('activityViewMedia');
+  media.replaceChildren();
+  (activity.media || []).slice(0, 4).forEach((item, index) => {
+    const source = mediaSource(item);
+    if (!source) return;
+    const element = String(item.type || '').startsWith('video') ? document.createElement('video') : document.createElement('img');
+    element.src = source;
+    element.setAttribute('aria-label', `${String(item.type || '').startsWith('video') ? 'Vídeo' : 'Foto'} ${index + 1} da atividade`);
+    if (element instanceof HTMLVideoElement) { element.controls = true; element.preload = 'metadata'; element.muted = true; }
+    else element.loading = 'lazy';
+    media.append(element);
+  });
+  document.getElementById('activityViewMediaSection').hidden = media.childElementCount === 0;
+  activityViewDialog.showModal();
+}
 const activityDialog = document.getElementById('activityDialog');
 const activityForm = document.getElementById('activityForm');
 function updateActivityFields() {
@@ -1534,6 +1587,8 @@ function openActivityEdit(activity) {
 document.getElementById('openActivity').addEventListener('click', openActivityForm);
 document.getElementById('historyRegister').addEventListener('click', openActivityForm);
 document.getElementById('activityClose').addEventListener('click', () => activityDialog.close());
+document.getElementById('activityViewClose').addEventListener('click', () => activityViewDialog.close());
+activityViewDialog.addEventListener('click', (event) => { if (event.target === activityViewDialog) activityViewDialog.close(); });
 document.getElementById('activityCancel').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityStartTimer').addEventListener('click', () => {
   const mode = activityForm.elements.activityType.value;
