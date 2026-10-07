@@ -1484,7 +1484,7 @@ function openActivityView(activity) {
     if (activityViewRunner) activityViewRunner.remove();
     if (activityViewAnimationFrame) cancelAnimationFrame(activityViewAnimationFrame);
     activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
-    const runnerIcon = L.divIcon({ className: 'activity-route-runner', html: '<span aria-hidden="true">🏃</span>', iconSize: [28, 28], iconAnchor: [14, 14] });
+    const runnerIcon = L.divIcon({ className: 'activity-route-runner', html: '<span class="activity-runner-sprite" aria-hidden="true">🏃</span>', iconSize: [32, 32], iconAnchor: [16, 16] });
     activityViewRunner = L.marker([route[0].lat, route[0].lng], { icon: runnerIcon, interactive: false, zIndexOffset: 1000 }).addTo(activityViewMap);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
     const routeCoordinates = route.map((point) => [Number(point.lat), Number(point.lng)]);
@@ -1518,6 +1518,16 @@ function openActivityView(activity) {
       const a = routeCoordinates[segment];
       const b = routeCoordinates[segment + 1];
       activityViewRunner.setLatLng([a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]);
+      const sprite = activityViewRunner.getElement()?.querySelector('.activity-runner-sprite');
+      if (sprite) {
+        const running = Math.floor(now / 110) % 2 === 0;
+        sprite.classList.toggle('is-running', running);
+        sprite.classList.toggle('is-running-alt', !running);
+        const latDelta = b[0] - a[0];
+        const lngDelta = b[1] - a[1];
+        const bearing = Math.atan2(lngDelta * Math.cos(a[0] * Math.PI / 180), latDelta) * 180 / Math.PI;
+        sprite.style.setProperty('--runner-heading', `${90 - bearing}deg`);
+      }
       activityViewAnimationFrame = requestAnimationFrame(animateRunner);
     };
     activityViewAnimationFrame = requestAnimationFrame(animateRunner);

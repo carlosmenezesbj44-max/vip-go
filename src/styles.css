@@ -1197,3 +1197,10 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 .activity-route-runner span{display:block;transform:translateY(-1px)}
 .activity-media-existing{position:relative}
 .activity-media-existing .activity-media-remove{background:#fff1ef;color:#b84a3d;border-color:#f1c9c2}
+.activity-route-runner{display:grid;place-items:center;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;font-size:25px;line-height:1;pointer-events:none}
+.activity-route-runner span{display:block;transform:rotate(var(--runner-heading,0deg));transform-origin:center;filter:drop-shadow(0 1px 2px #fff) drop-shadow(0 1px 2px #164b3d);will-change:transform}
+.activity-route-runner .activity-runner-sprite.is-running{animation:activity-run-bounce .22s ease-in-out infinite alternate}
+.activity-route-runner .activity-runner-sprite.is-running-alt{animation:activity-run-bounce-alt .22s ease-in-out infinite alternate}
+@keyframes activity-run-bounce{from{translate:0 1px;scale:1}to{translate:0 -2px;scale:1.06}}
+@keyframes activity-run-bounce-alt{from{translate:0 -2px;scale:1.06}to{translate:0 1px;scale:1}}
+@media(prefers-reduced-motion:reduce){.activity-route-runner .activity-runner-sprite{animation:none!important}}
