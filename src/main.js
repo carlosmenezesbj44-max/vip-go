@@ -1727,6 +1727,7 @@ activityForm.addEventListener('submit', async (event) => {
         reader.readAsDataURL(file);
       })));
       if (newMedia.length) changes.media = newMedia;
+      changes.mediaKeep = activityExistingMedia.map((item) => item.filename).filter(Boolean);
       if (document.getElementById('activityShareToggle').checked !== Boolean(currentUser?.shareActivities)) {
         const { user } = await api('/privacy', { method: 'PUT', body: JSON.stringify({
           showInRanking: Boolean(currentUser?.showInRanking),

@@ -1013,8 +1013,11 @@ app.put('/api/activities/:id', authRequired, async (req, res) => {
   const owned = statements.ownedActivity.get(req.params.id, req.session.userId);
   if (!owned) return res.status(404).json({ error: 'Atividade não encontrada.' });
   const currentMedia = JSON.parse(owned.mediaJson || '[]');
+  const requestedMediaKeep = Array.isArray(req.body?.mediaKeep) ? req.body.mediaKeep.filter((item) => typeof item === 'string') : null;
+  const keptMedia = requestedMediaKeep ? currentMedia.filter((item) => requestedMediaKeep.includes(item.filename)) : currentMedia;
+  const removedMedia = currentMedia.filter((item) => !keptMedia.includes(item));
   const mediaInput = Array.isArray(req.body?.media) ? req.body.media : [];
-  if (mediaInput.length > 4 || currentMedia.length + mediaInput.length > 4 || mediaInput.some((item) => typeof item?.data !== 'string' || !/^data:(image\/(jpeg|png|webp|gif)|video\/(mp4|webm|quicktime));base64,/.test(item.data))) {
+  if (mediaInput.length > 4 || keptMedia.length + mediaInput.length > 4 || mediaInput.some((item) => typeof item?.data !== 'string' || !/^data:(image\/(jpeg|png|webp|gif)|video\/(mp4|webm|quicktime));base64,/.test(item.data))) {
     return res.status(400).json({ error: 'A atividade aceita até quatro fotos ou vídeos compatíveis.' });
   }
   const addedMedia = [];
@@ -1044,8 +1047,9 @@ app.put('/api/activities/:id', authRequired, async (req, res) => {
     distanceKm,
   });
   if (!result.changes) return res.status(404).json({ error: 'Atividade não encontrada.' });
-  if (addedMedia.length) {
-    statements.updateActivityMedia.run(JSON.stringify([...currentMedia, ...addedMedia]), req.params.id, req.session.userId);
+  if (requestedMediaKeep || addedMedia.length) {
+    statements.updateActivityMedia.run(JSON.stringify([...keptMedia, ...addedMedia]), req.params.id, req.session.userId);
+    await Promise.all(removedMedia.map((item) => item.filename ? unlink(resolve(uploadsDirectory, item.filename)).catch(() => {}) : Promise.resolve()));
     addedMedia.forEach((item) => statements.linkActivityMedia.run(item.filename, req.params.id));
   }
   res.json({ updated: true, addedMedia: addedMedia.length });

@@ -1195,3 +1195,5 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 
 .activity-route-runner{display:grid;place-items:center;background:#fff;border:3px solid #079d8a;border-radius:50%;box-shadow:0 3px 10px rgba(0,70,55,.3);font-size:16px;line-height:1;transform:translateY(-1px)}
 .activity-route-runner span{display:block;transform:translateY(-1px)}
+.activity-media-existing{position:relative}
+.activity-media-existing .activity-media-remove{background:#fff1ef;color:#b84a3d;border-color:#f1c9c2}
