@@ -1491,9 +1491,9 @@ function openActivityView(activity) {
     const startedAt = performance.now();
     const duration = Math.max(2600, Math.min(9000, routeCoordinates.length * 130));
     const animateRunner = (now) => {
-      if (!activityViewRunner || !activityViewDialog.open) return;
-      const progress = ((now - startedAt) % (duration + 900)) / duration;
-      const eased = progress <= 1 ? progress : 1;
+      if (!activityViewRunner) return;
+      const progress = ((now - startedAt) % duration) / duration;
+      const eased = progress;
       const segment = Math.min(routeCoordinates.length - 2, Math.floor(eased * (routeCoordinates.length - 1)));
       const local = eased * (routeCoordinates.length - 1) - segment;
       const a = routeCoordinates[segment];
