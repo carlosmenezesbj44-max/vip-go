@@ -1228,3 +1228,13 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 }
 @media(max-width:380px){.activity-actions{padding-left:43px}}
 @media(max-width:720px){.activity-action-menu-toggle{min-width:42px;width:42px;height:42px;padding:0;border-radius:12px;font-size:19px;line-height:1}.activity-action-menu-toggle span{display:block;transform:scaleX(1.08)}}
+@media(max-width:720px){
+ .activity{position:relative;padding:14px 48px 14px 0!important}
+ .activity-action-menu-toggle{display:none}
+ .activity>.activity-action-menu-toggle{position:absolute;top:12px;right:0;display:grid;place-items:center;width:38px;height:38px;min-height:38px;padding:0;border:1px solid #cfe8db;border-radius:11px;background:#fff;color:#147b67;font-size:18px;line-height:1;z-index:2}
+ .activity>.activity-action-menu-toggle:hover{background:#e9f8ef}
+ .activity-actions{grid-column:1;display:flex;justify-content:flex-start;padding:0;margin-left:49px}
+ .activity-actions .activity-action-menu-toggle{display:none!important}
+ .activity-main{padding-right:0}
+}
+@media(max-width:380px){.activity{padding-right:43px!important}.activity-actions{margin-left:43px}}
