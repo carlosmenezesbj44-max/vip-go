@@ -1227,3 +1227,4 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
  .activity-actions.is-menu-open .activity-action:not(.activity-action-menu-toggle){display:inline-flex;align-items:center;justify-content:center}
 }
 @media(max-width:380px){.activity-actions{padding-left:43px}}
+@media(max-width:720px){.activity-action-menu-toggle{min-width:42px;width:42px;height:42px;padding:0;border-radius:12px;font-size:19px;line-height:1}.activity-action-menu-toggle span{display:block;transform:scaleX(1.08)}}

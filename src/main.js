@@ -114,7 +114,7 @@ function renderActivities() {
     const hasDistance = distanceActivityTypes.has(activityType) && activity.distanceKm > 0;
     const heartRateSummary = activity.averageHeartRate ? ` · FC ${activity.averageHeartRate} média / ${activity.maxHeartRate} máx.` : '';
     item.dataset.activityId = activity.id;
-    item.innerHTML = `<div class="activity-main"><div class="activity-icon" aria-hidden="true">${activitySymbol(activityType)}</div><div class="activity-copy"><h3>${escapeHtml(activityType)}</h3><p>${escapeHtml(`${date} · ${timeRange}`)}</p></div><div class="activity-metrics"><strong>${escapeHtml(hasDistance ? distance : formatDuration(activity.durationSeconds))}</strong><small>${escapeHtml(`${hasDistance ? formatDuration(activity.durationSeconds) : 'Duração'}${heartRateSummary}`)}</small></div></div><div class="activity-actions" aria-label="Ações da atividade"><button type="button" class="activity-action activity-action-menu-toggle" aria-expanded="false">⋯ Opções</button><button type="button" class="activity-action activity-action-view" data-activity-action="view">◉ Visualizar</button><button type="button" class="activity-action activity-action-start" data-activity-action="start">▶ Iniciar</button><button type="button" class="activity-action" data-activity-action="edit">Editar</button><button type="button" class="activity-action activity-action-media" data-activity-action="media">＋ Foto/vídeo</button><button type="button" class="activity-action activity-action-delete" data-activity-action="delete">Excluir</button></div>`;
+    item.innerHTML = `<div class="activity-main"><div class="activity-icon" aria-hidden="true">${activitySymbol(activityType)}</div><div class="activity-copy"><h3>${escapeHtml(activityType)}</h3><p>${escapeHtml(`${date} · ${timeRange}`)}</p></div><div class="activity-metrics"><strong>${escapeHtml(hasDistance ? distance : formatDuration(activity.durationSeconds))}</strong><small>${escapeHtml(`${hasDistance ? formatDuration(activity.durationSeconds) : 'Duração'}${heartRateSummary}`)}</small></div></div><div class="activity-actions" aria-label="Ações da atividade"><button type="button" class="activity-action activity-action-menu-toggle" aria-label="Abrir ações da atividade" aria-expanded="false"><span aria-hidden="true">☰</span></button><button type="button" class="activity-action activity-action-view" data-activity-action="view">◉ Visualizar</button><button type="button" class="activity-action activity-action-start" data-activity-action="start">▶ Iniciar</button><button type="button" class="activity-action" data-activity-action="edit">Editar</button><button type="button" class="activity-action activity-action-media" data-activity-action="media">＋ Foto/vídeo</button><button type="button" class="activity-action activity-action-delete" data-activity-action="delete">Excluir</button></div>`;
     list.append(item);
   });
   if (!activities.length) {
@@ -291,7 +291,8 @@ document.getElementById('activityList').addEventListener('click', async (event) 
     const actions = menuToggle.closest('.activity-actions');
     const isOpen = actions.classList.toggle('is-menu-open');
     menuToggle.setAttribute('aria-expanded', String(isOpen));
-    menuToggle.textContent = isOpen ? '× Fechar' : '⋯ Opções';
+    menuToggle.innerHTML = isOpen ? '<span aria-hidden="true">×</span>' : '<span aria-hidden="true">☰</span>';
+    menuToggle.setAttribute('aria-label', isOpen ? 'Fechar ações da atividade' : 'Abrir ações da atividade');
     return;
   }
   const button = event.target.closest('button[data-activity-action]');
@@ -300,7 +301,8 @@ document.getElementById('activityList').addEventListener('click', async (event) 
     const actions = button.closest('.activity-actions');
     actions?.classList.remove('is-menu-open');
     const toggle = actions?.querySelector('.activity-action-menu-toggle');
-    if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.textContent = '⋯ Opções'; }
+    if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.innerHTML = '<span aria-hidden="true">☰</span>';
+    toggle.setAttribute('aria-label', 'Abrir ações da atividade'); }
   }
   const activity = readActivities().find((item) => item.id === button.closest('[data-activity-id]')?.dataset.activityId);
   if (!activity) return;
