@@ -107,6 +107,10 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   let stoppedAt = 0;
   let points = [];
   let meters = 0;
+  let nextDistanceMilestone = 100;
+  let distanceMilestoneQueue = [];
+  let distanceMilestoneTimer = null;
+  let distanceMilestoneElement = null;
   let communityRoutes = [];
   let selected = null;
   let selectedRouteMarker = null;
@@ -169,6 +173,12 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     if (map) return;
     map = L.map('routeMap', { zoomControl: true }).setView([-8.052, -34.908], 12);
     addTiles(map);
+    distanceMilestoneElement = document.createElement('div');
+    distanceMilestoneElement.className = 'route-distance-milestone';
+    distanceMilestoneElement.setAttribute('role', 'status');
+    distanceMilestoneElement.setAttribute('aria-live', 'polite');
+    distanceMilestoneElement.hidden = true;
+    map.getContainer().append(distanceMilestoneElement);
     shownRoute = L.polyline([], { color: '#fa8b45', weight: 5, opacity: 0.9 }).addTo(map);
     routeDistanceDots = L.layerGroup().addTo(map);
     liveParticipantLayer = L.layerGroup().addTo(map);
@@ -377,6 +387,11 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     stopWatch();
     points = [];
     meters = 0;
+    nextDistanceMilestone = 100;
+    distanceMilestoneQueue = [];
+    clearTimeout(distanceMilestoneTimer);
+    distanceMilestoneTimer = null;
+    if (distanceMilestoneElement) { distanceMilestoneElement.hidden = true; distanceMilestoneElement.classList.remove('is-visible'); }
     startedAt = 0;
     stoppedAt = 0;
     $('mapAccuracy').textContent = '—';
@@ -564,6 +579,27 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     return true;
   }
 
+  function showNextDistanceMilestone() {
+    if (!distanceMilestoneElement || !distanceMilestoneQueue.length) return;
+    const milestone = distanceMilestoneQueue.shift();
+    const label = milestone >= 1000
+      ? `${(milestone / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`
+      : `${milestone} m`;
+    distanceMilestoneElement.innerHTML = `<span aria-hidden="true">✓</span><strong>${label} percorridos</strong>`;
+    distanceMilestoneElement.hidden = false;
+    distanceMilestoneElement.classList.remove('is-visible');
+    void distanceMilestoneElement.offsetWidth;
+    distanceMilestoneElement.classList.add('is-visible');
+    clearTimeout(distanceMilestoneTimer);
+    distanceMilestoneTimer = setTimeout(() => {
+      distanceMilestoneElement.classList.remove('is-visible');
+      distanceMilestoneTimer = setTimeout(() => {
+        if (!distanceMilestoneQueue.length) distanceMilestoneElement.hidden = true;
+        else showNextDistanceMilestone();
+      }, 260);
+    }, 1700);
+  }
+
   function onPosition(position) {
     const { latitude: lat, longitude: lng, accuracy } = position.coords;
     $('mapAccuracy').textContent = `${Math.round(accuracy)} m`;
@@ -579,6 +615,11 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       const seconds = Math.max(1, (point.t - last.t) / 1000);
       if (delta < 5 || delta / seconds > 25) return;
       meters += delta;
+      while (meters >= nextDistanceMilestone) {
+        distanceMilestoneQueue.push(nextDistanceMilestone);
+        nextDistanceMilestone += 100;
+      }
+      if (distanceMilestoneQueue.length && !distanceMilestoneTimer) showNextDistanceMilestone();
     }
     points.push(point);
     publishLiveLocation(point);

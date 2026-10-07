@@ -1220,3 +1220,11 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
  .activity-main{padding-right:0}
 }
 @media(max-width:380px){.activity{padding-right:43px!important}.activity-actions{margin-left:43px}}
+
+.route-distance-milestone{position:absolute;z-index:900;top:12px;left:50%;display:flex;align-items:center;gap:8px;max-width:calc(100% - 76px);padding:10px 15px;border:1px solid #9fe5d4;border-radius:999px;background:rgba(246,255,251,.97);box-shadow:0 6px 22px #073d3630;color:#075d4e;opacity:0;pointer-events:none;transform:translate(-50%,-12px) scale(.96);transition:opacity .22s ease,transform .22s ease;white-space:nowrap}
+.route-distance-milestone[hidden]{display:none}
+.route-distance-milestone.is-visible{opacity:1;transform:translate(-50%,0) scale(1)}
+.route-distance-milestone span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#d9f8eb;color:#07866f;font-size:13px;font-weight:900}
+.route-distance-milestone strong{font:800 12px 'Manrope',sans-serif}
+@media(max-width:520px){.route-distance-milestone{top:10px;padding:8px 12px}.route-distance-milestone strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.route-distance-milestone{transition:none}}
