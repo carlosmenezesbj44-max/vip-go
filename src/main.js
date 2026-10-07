@@ -1637,6 +1637,18 @@ function renderActivityMedia() {
   activityMediaObjectUrls = [];
   activityMediaPreviews.replaceChildren();
   const files = activityMediaFiles;
+  activityExistingMedia.forEach((saved, index) => {
+    const item = document.createElement('article'); item.className = 'activity-media-item activity-media-existing';
+    const preview = String(saved.type || '').startsWith('video') ? document.createElement('video') : document.createElement('img');
+    preview.className = 'activity-media-thumb'; preview.src = mediaSource(saved); preview.alt = saved.name || `Arquivo ${index + 1}`;
+    if (preview instanceof HTMLVideoElement) { preview.controls = true; preview.muted = true; preview.preload = 'metadata'; }
+    const meta = document.createElement('div'); meta.className = 'activity-media-meta';
+    const name = document.createElement('strong'); name.textContent = saved.name || (String(saved.type || '').startsWith('video') ? 'Vídeo salvo' : 'Foto salva');
+    const details = document.createElement('small'); details.textContent = 'Arquivo salvo'; meta.append(name, details);
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'activity-media-remove'; remove.textContent = '×'; remove.setAttribute('aria-label', `Excluir ${name.textContent}`);
+    remove.addEventListener('click', () => { activityExistingMedia = activityExistingMedia.filter((_entry, savedIndex) => savedIndex !== index); renderActivityMedia(); setActivityMediaStatus('Arquivo removido. Salve as alterações para confirmar.'); });
+    item.append(preview, meta, remove); activityMediaPreviews.append(item);
+  });
   activityMediaCount.textContent = `${activityExistingMedia.length + files.length} de 4`;
   files.forEach((file, index) => {
     const url = URL.createObjectURL(file);
