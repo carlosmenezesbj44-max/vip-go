@@ -20,6 +20,30 @@ function metersBetween(a, b) {
   return 12742000 * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 
+function pointsAtDistanceIntervals(route, interval = 100) {
+  const markers = [];
+  if (!Array.isArray(route) || route.length < 2) return markers;
+  let distance = 0;
+  let nextMarker = interval;
+  for (let index = 1; index < route.length; index += 1) {
+    const start = route[index - 1];
+    const end = route[index];
+    const segmentLength = metersBetween(start, end);
+    if (!segmentLength) continue;
+    while (nextMarker <= distance + segmentLength) {
+      const fraction = (nextMarker - distance) / segmentLength;
+      markers.push({
+        distance: nextMarker,
+        lat: start.lat + (end.lat - start.lat) * fraction,
+        lng: start.lng + (end.lng - start.lng) * fraction,
+      });
+      nextMarker += interval;
+    }
+    distance += segmentLength;
+  }
+  return markers;
+}
+
 function smoothRouteForDisplay(route) {
   if (!Array.isArray(route) || route.length < 3) return route || [];
   const median = (values) => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
@@ -62,6 +86,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   let previewEndMarker;
   let choosingPreviewPoint = null;
   let shownRoute;
+  let routeDistanceDots;
   let liveRoute;
   let plannedRouteLayer;
   let plannedStartMarker;
@@ -97,6 +122,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     map = L.map('routeMap', { zoomControl: true }).setView([-8.052, -34.908], 12);
     addTiles(map);
     shownRoute = L.polyline([], { color: '#fa8b45', weight: 5, opacity: 0.9 }).addTo(map);
+    routeDistanceDots = L.layerGroup().addTo(map);
     liveRoute = L.polyline([], { color: '#00dfc1', weight: 6, opacity: 0.95 }).addTo(map);
   }
 
@@ -327,8 +353,20 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     ensureMap();
     if (!map || !Array.isArray(route) || route.length < 2) return;
     selected = { type, id };
-    shownRoute.setStyle({ color: type === 'mine' ? '#00bca2' : '#fa8b45' });
-    shownRoute.setLatLngs((isRoadMatched ? route : smoothRouteForDisplay(route)).map((point) => [point.lat, point.lng]));
+    const color = type === 'mine' ? '#00bca2' : '#fa8b45';
+    const displayRoute = isRoadMatched ? route : smoothRouteForDisplay(route);
+    shownRoute.setStyle({ color });
+    shownRoute.setLatLngs(displayRoute.map((point) => [point.lat, point.lng]));
+    routeDistanceDots.clearLayers();
+    for (const marker of pointsAtDistanceIntervals(displayRoute, 100)) {
+      L.circleMarker([marker.lat, marker.lng], {
+        radius: 4,
+        color: '#ffffff',
+        weight: 2,
+        fillColor: color,
+        fillOpacity: 1,
+      }).bindTooltip(`${marker.distance} m`, { direction: 'top', opacity: 0.95 }).addTo(routeDistanceDots);
+    }
     map.fitBounds(shownRoute.getBounds(), { padding: [35, 35], maxZoom: 16 });
     document.querySelectorAll('.map-route-row').forEach((row) => row.classList.toggle('selected', row.dataset.routeId === String(id) && row.dataset.routeType === type));
   }
@@ -466,6 +504,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     clearDraft(false);
     resetHeartRateStats();
     shownRoute.setLatLngs([]);
+    routeDistanceDots.clearLayers();
     if (mode) $('mapMode').value = mode;
     trackingWithGps = trackLocation;
     $('routeMap').hidden = !trackLocation;
