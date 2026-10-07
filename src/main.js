@@ -1488,17 +1488,36 @@ function openActivityView(activity) {
     activityViewRunner = L.marker([route[0].lat, route[0].lng], { icon: runnerIcon, interactive: false, zIndexOffset: 1000 }).addTo(activityViewMap);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
     const routeCoordinates = route.map((point) => [Number(point.lat), Number(point.lng)]);
-    const startedAt = performance.now();
-    const duration = Math.max(2600, Math.min(9000, routeCoordinates.length * 130));
+    const segmentLengths = [];
+    let totalRouteLength = 0;
+    for (let index = 1; index < routeCoordinates.length; index += 1) {
+      const [latA, lngA] = routeCoordinates[index - 1];
+      const [latB, lngB] = routeCoordinates[index];
+      const latDelta = (latB - latA) * Math.PI / 180;
+      const lngDelta = (lngB - lngA) * Math.PI / 180;
+      const haversine = Math.sin(latDelta / 2) ** 2 + Math.cos(latA * Math.PI / 180) * Math.cos(latB * Math.PI / 180) * Math.sin(lngDelta / 2) ** 2;
+      const length = 6371000 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+      segmentLengths.push(length);
+      totalRouteLength += length;
+    }
+    let previousFrame = 0;
+    let progressDistance = 0;
+    const lapDuration = 4200;
     const animateRunner = (now) => {
-      if (!activityViewRunner) return;
-      const progress = ((now - startedAt) % duration) / duration;
-      const eased = progress;
-      const segment = Math.min(routeCoordinates.length - 2, Math.floor(eased * (routeCoordinates.length - 1)));
-      const local = eased * (routeCoordinates.length - 1) - segment;
+      if (!activityViewRunner || !activityViewMap) return;
+      if (previousFrame) progressDistance = (progressDistance + totalRouteLength * (now - previousFrame) / lapDuration) % totalRouteLength;
+      previousFrame = now;
+      let remaining = progressDistance;
+      let segment = 0;
+      while (segment < segmentLengths.length - 1 && remaining > segmentLengths[segment]) {
+        remaining -= segmentLengths[segment];
+        segment += 1;
+      }
+      const length = segmentLengths[segment] || 1;
+      const fraction = Math.min(1, remaining / length);
       const a = routeCoordinates[segment];
-      const b = routeCoordinates[Math.min(routeCoordinates.length - 1, segment + 1)];
-      activityViewRunner.setLatLng([a[0] + (b[0] - a[0]) * local, a[1] + (b[1] - a[1]) * local]);
+      const b = routeCoordinates[segment + 1];
+      activityViewRunner.setLatLng([a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]);
       activityViewAnimationFrame = requestAnimationFrame(animateRunner);
     };
     activityViewAnimationFrame = requestAnimationFrame(animateRunner);
