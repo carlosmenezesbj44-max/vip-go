@@ -1011,12 +1011,11 @@ function renderAdminParticipants(query = '') {
   if (!participants.length) {
     const empty = document.createElement('p');
     empty.className = 'activity-empty';
-    empty.textContent = adminParticipants.length ? 'Nenhum cadastro corresponde à busca.' : 'Ainda não há participantes nesta campanha.';
+    empty.textContent = adminParticipants.length ? 'Nenhuma conta corresponde à busca.' : 'Ainda não há contas cadastradas.';
     list.append(empty);
     return;
   }
 
-  const teams = adminParticipantTeams;
   participants.forEach((person) => {
     const row = document.createElement('article');
     row.className = 'admin-participant-row';
@@ -1029,7 +1028,7 @@ function renderAdminParticipants(query = '') {
     email.textContent = person.email;
     const meta = document.createElement('small');
     const joinedDate = new Date(`${person.createdAt}Z`);
-    meta.textContent = `Cadastro: ${Number.isNaN(joinedDate.getTime()) ? 'data indisponível' : joinedDate.toLocaleDateString('pt-BR')} · ${person.isAdmin ? 'Administrador' : 'Participante'} · ${person.showInRanking ? 'No ranking' : 'Fora do ranking'}`;
+    meta.textContent = `Cadastro: ${Number.isNaN(joinedDate.getTime()) ? 'data indisponível' : joinedDate.toLocaleDateString('pt-BR')} · Grupo: ${person.companyName || 'Sem grupo'} · ${person.isAdmin ? 'Administrador' : 'Participante'} · ${person.showInRanking ? 'No ranking' : 'Fora do ranking'}`;
     details.append(name, email, meta);
     const form = document.createElement('form');
     form.className = 'admin-participant-edit premium-form';
@@ -1049,7 +1048,7 @@ function renderAdminParticipants(query = '') {
     const teamSelect = document.createElement('select');
     teamSelect.name = 'teamId';
     teamSelect.add(new Option('Sem equipe', ''));
-    teams.forEach((team) => teamSelect.add(new Option(team.name, team.id)));
+    adminParticipantTeams.filter((team) => person.companyId && Number(team.companyId) === Number(person.companyId)).forEach((team) => teamSelect.add(new Option(team.name, team.id)));
     teamSelect.value = person.teamId ? String(person.teamId) : '';
     teamLabel.append(teamSelect);
     const save = document.createElement('button');
@@ -1063,7 +1062,7 @@ function renderAdminParticipants(query = '') {
 async function loadAdminParticipants() {
   const list = document.getElementById('adminParticipantsList');
   if (!list) return;
-  list.innerHTML = '<p class="activity-empty">Carregando participantes…</p>';
+  list.innerHTML = '<p class="activity-empty">Carregando contas…</p>';
   try {
     const result = await api('/admin/participants');
     adminParticipants = result.participants || [];

@@ -708,26 +708,26 @@ app.post('/api/admin/admins', authRequired, campaignAdminRequired, async (req, r
 });
 
 app.get('/api/admin/participants', authRequired, campaignAdminRequired, (req, res) => {
-  res.json({ participants: statements.campaignParticipants.all(req.adminUser.companyId), teams: statements.teamsForCompany.all(req.adminUser.companyId) });
+  res.json({ participants: statements.allAccountsForAdmin.all(), teams: statements.teamsForAllCompanies.all() });
 });
 
 app.put('/api/admin/participants/:id', authRequired, campaignAdminRequired, (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Participante inválido.' });
-  const participant = statements.campaignParticipantById.get(id, req.adminUser.companyId);
-  if (!participant) return res.status(404).json({ error: 'Participante não encontrado nesta campanha.' });
+  const participant = statements.accountForAdminById.get(id);
+  if (!participant) return res.status(404).json({ error: 'Cadastro não encontrado.' });
 
   const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const teamId = req.body?.teamId === null || req.body?.teamId === '' ? null : Number(req.body?.teamId);
   if (name.length < 2 || name.length > 60) return res.status(400).json({ error: 'O nome deve ter de 2 a 60 caracteres.' });
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail válido.' });
-  if (teamId !== null && (!Number.isInteger(teamId) || !statements.teamByIdAndCompany.get(teamId, req.adminUser.companyId))) return res.status(400).json({ error: 'Selecione uma equipe desta campanha.' });
+  if (teamId !== null && (!Number.isInteger(teamId) || !participant.companyId || !statements.teamByIdAndCompany.get(teamId, participant.companyId))) return res.status(400).json({ error: 'Selecione uma equipe do grupo atual da conta.' });
   const existing = statements.userByEmail.get(email);
   if (existing && existing.id !== id) return res.status(409).json({ error: 'Esse e-mail já está sendo usado por outra conta.' });
 
-  statements.updateCampaignParticipant.run(name, email, teamId, id, req.adminUser.companyId);
-  res.json({ participants: statements.campaignParticipants.all(req.adminUser.companyId), teams: statements.teamsForCompany.all(req.adminUser.companyId) });
+  statements.updateAccountForAdmin.run(name, email, teamId, id);
+  res.json({ participants: statements.allAccountsForAdmin.all(), teams: statements.teamsForAllCompanies.all() });
 });
 
 app.put('/api/admin/campaign', authRequired, campaignAdminRequired, (req, res) => {
