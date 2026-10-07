@@ -1214,6 +1214,6 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 @media(prefers-reduced-motion:reduce){.activity-route-runner .runner-body,.activity-route-runner .runner-arm-front,.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front,.activity-route-runner .runner-leg-back{animation:none}}
 
 /* Articulated profile runner: position belongs to Leaflet, pose to SVG. */
-.activity-route-runner{width:44px!important;height:55px!important;background:none!important;border:0!important;box-shadow:none!important}
-.activity-route-runner .runner-svg{width:44px;height:55px;transform:none;filter:drop-shadow(0 1px 1px #ffffff90);overflow:visible}
+.activity-route-runner{width:36px!important;height:45px!important;background:none!important;border:0!important;box-shadow:none!important}
+.activity-route-runner .runner-svg{width:36px;height:45px;transform:none;filter:drop-shadow(0 1px 1px #ffffff90);overflow:visible}
 .activity-route-runner .runner-svg g{animation:none;stroke-linecap:round;stroke-linejoin:round}
