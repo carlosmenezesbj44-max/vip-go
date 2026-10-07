@@ -288,7 +288,9 @@ function renderWeeklyActivityChart(activities) {
 document.getElementById('activityList').addEventListener('click', async (event) => {
   const menuToggle = event.target.closest('.activity-action-menu-toggle');
   if (menuToggle) {
-    const actions = menuToggle.closest('.activity-actions');
+    const card = menuToggle.closest('.activity');
+    const actions = card?.querySelector('.activity-actions');
+    if (!actions) return;
     const isOpen = actions.classList.toggle('is-menu-open');
     menuToggle.setAttribute('aria-expanded', String(isOpen));
     menuToggle.innerHTML = isOpen ? '<span aria-hidden="true">×</span>' : '<span aria-hidden="true">☰</span>';
@@ -300,7 +302,7 @@ document.getElementById('activityList').addEventListener('click', async (event) 
   if (window.matchMedia('(max-width: 720px)').matches) {
     const actions = button.closest('.activity-actions');
     actions?.classList.remove('is-menu-open');
-    const toggle = actions?.querySelector('.activity-action-menu-toggle');
+    const toggle = actions?.closest('.activity')?.querySelector('.activity-action-menu-toggle');
     if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.innerHTML = '<span aria-hidden="true">☰</span>';
     toggle.setAttribute('aria-label', 'Abrir ações da atividade'); }
   }
