@@ -623,7 +623,7 @@ function renderCommunityCarousel(posts = [], activities = []) {
       card.setAttribute('role', 'button');
       card.setAttribute('aria-label', `Ver atividade de ${item.name} e comentar`);
       const open = () => openSharedActivityView(item);
-      card.addEventListener('click', (event) => { if (!event.target.closest('button, a')) open(); });
+      card.openActivity = open;
       card.addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && event.target === card) { event.preventDefault(); open(); } });
     }
     const head = document.createElement('div'); head.className = 'community-carousel-author';
@@ -1473,23 +1473,37 @@ document.getElementById('communityCarouselPrev').addEventListener('click', () =>
 document.getElementById('communityCarouselNext').addEventListener('click', () => document.getElementById('communityCarouselTrack').scrollBy({ left: 320, behavior: 'smooth' }));
 const communityCarouselTrack = document.getElementById('communityCarouselTrack');
 let carouselDragStart = null;
+let carouselClickCandidate = null;
 communityCarouselTrack.addEventListener('pointerdown', (event) => {
   if (event.pointerType === 'mouse' && event.button === 0) {
-    carouselDragStart = { x: event.clientX, scrollLeft: communityCarouselTrack.scrollLeft };
+    carouselDragStart = { x: event.clientX, scrollLeft: communityCarouselTrack.scrollLeft, card: event.target.closest('.community-carousel-slide.is-openable'), moved: false };
     communityCarouselTrack.classList.add('is-dragging');
     communityCarouselTrack.setPointerCapture(event.pointerId);
   }
 });
 communityCarouselTrack.addEventListener('pointermove', (event) => {
-  if (carouselDragStart) communityCarouselTrack.scrollLeft = carouselDragStart.scrollLeft - (event.clientX - carouselDragStart.x);
+  if (!carouselDragStart) return;
+  const delta = event.clientX - carouselDragStart.x;
+  if (Math.abs(delta) > 7) carouselDragStart.moved = true;
+  if (carouselDragStart.moved) communityCarouselTrack.scrollLeft = carouselDragStart.scrollLeft - delta;
 });
-const finishCarouselDrag = () => {
+const finishCarouselDrag = (allowClick = false) => {
+  if (allowClick && carouselDragStart) {
+    carouselClickCandidate = { card: carouselDragStart.card, moved: carouselDragStart.moved };
+    setTimeout(() => { carouselClickCandidate = null; }, 0);
+  }
   carouselDragStart = null;
   communityCarouselTrack.classList.remove('is-dragging');
 };
-communityCarouselTrack.addEventListener('pointerup', finishCarouselDrag);
-communityCarouselTrack.addEventListener('pointercancel', finishCarouselDrag);
+communityCarouselTrack.addEventListener('pointerup', () => finishCarouselDrag(true));
+communityCarouselTrack.addEventListener('pointercancel', () => finishCarouselDrag(false));
 communityCarouselTrack.addEventListener('lostpointercapture', finishCarouselDrag);
+communityCarouselTrack.addEventListener('click', (event) => {
+  const card = event.target.closest?.('.community-carousel-slide.is-openable') || carouselClickCandidate?.card;
+  const wasDrag = carouselClickCandidate?.moved;
+  carouselClickCandidate = null;
+  if (card?.openActivity && !wasDrag) card.openActivity();
+});
 renderActivities();
 renderBadges([]);
 renderCampaign({ joined: false });
