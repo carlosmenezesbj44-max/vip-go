@@ -1,5 +1,5 @@
 import { createMapsController } from './maps.js';
-import { animateRouteRunner } from './route-runner.js';
+import { animateRouteMarker } from './route-runner.js';
 import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
 import { setupPasswordVisibility } from './password-visibility.js';
 import '../assets/vendor/leaflet/leaflet.css';
@@ -16,7 +16,7 @@ let activityCache = null;
 let editingActivityId = null;
 let activityViewMap;
 let activityViewRouteLayer;
-let activityViewRunner;
+let activityViewMarker;
 let communityPhotoFiles = [];
 let communityCommentState = new Map();
 let activeCommunityId = null;
@@ -1499,10 +1499,10 @@ function openActivityView(activity) {
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(activityViewMap);
     }
     if (activityViewRouteLayer) activityViewRouteLayer.remove();
-    activityViewRunner?.stop();
+    activityViewMarker?.stop();
     activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
-    activityViewRunner = animateRouteRunner(L, activityViewMap, route);
+    activityViewMarker = animateRouteMarker(L, activityViewMap, route);
     setTimeout(() => activityViewMap.invalidateSize(), 50);
   }
   const media = document.getElementById('activityViewMedia');
@@ -1610,7 +1610,7 @@ document.getElementById('openActivity').addEventListener('click', openActivityFo
 document.getElementById('historyRegister').addEventListener('click', openActivityForm);
 document.getElementById('activityClose').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityViewClose').addEventListener('click', () => activityViewDialog.close());
-activityViewDialog.addEventListener('close', () => { activityViewRunner?.stop(); activityViewRunner = null; });
+activityViewDialog.addEventListener('close', () => { activityViewMarker?.stop(); activityViewMarker = null; });
 activityViewDialog.addEventListener('click', (event) => { if (event.target === activityViewDialog) activityViewDialog.close(); });
 document.getElementById('activityCancel').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityStartTimer').addEventListener('click', () => {

@@ -1193,31 +1193,11 @@ button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3p
 .activity-action-view{border-color:#a8e7d7;background:#effbf7;color:#087e6d}
 @media (max-width:640px){.activity-view-dialog{width:calc(100% - 20px);max-height:82vh}.activity-view-dialog article{padding:18px}.activity-view-stats{gap:6px}.activity-view-stat{padding:9px 8px}.activity-view-stat strong{font-size:.78rem}.activity-view-map{height:150px}}
 
-.activity-route-runner{display:grid;place-items:center;background:#fff;border:3px solid #079d8a;border-radius:50%;box-shadow:0 3px 10px rgba(0,70,55,.3);font-size:16px;line-height:1;transform:translateY(-1px)}
-.activity-route-runner span{display:block;transform:translateY(-1px)}
-.activity-media-existing{position:relative}
-.activity-media-existing .activity-media-remove{background:#fff1ef;color:#b84a3d;border-color:#f1c9c2}
-.activity-route-runner{display:grid;place-items:center;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;font-size:25px;line-height:1;pointer-events:none}
-.activity-route-runner span{display:block;transform:rotate(var(--runner-heading,0deg));transform-origin:center;filter:drop-shadow(0 1px 2px #fff) drop-shadow(0 1px 2px #164b3d);will-change:transform}
-.activity-route-runner .activity-runner-sprite.is-running{animation:activity-run-bounce .22s ease-in-out infinite alternate}
-.activity-route-runner .activity-runner-sprite.is-running-alt{animation:activity-run-bounce-alt .22s ease-in-out infinite alternate}
-@keyframes activity-run-bounce{from{translate:0 1px;scale:1}to{translate:0 -2px;scale:1.06}}
-@keyframes activity-run-bounce-alt{from{translate:0 -2px;scale:1.06}to{translate:0 1px;scale:1}}
-@media(prefers-reduced-motion:reduce){.activity-route-runner .activity-runner-sprite{animation:none!important}}
-.activity-route-runner{display:grid;place-items:center;width:38px!important;height:46px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none}
-.activity-route-runner .runner-svg{width:34px;height:42px;overflow:visible;transform:rotate(var(--runner-heading,0deg));transform-origin:50% 50%;filter:drop-shadow(0 1px 1px #fff);will-change:transform}
-.activity-route-runner .runner-body{transform-origin:20px 25px;animation:runner-bob .21s ease-in-out infinite alternate}
-.activity-route-runner .runner-arm-front,.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front,.activity-route-runner .runner-leg-back{transform-box:view-box;transform-origin:20px 24px;animation:runner-limb .21s ease-in-out infinite alternate}
-.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front{animation-delay:-.21s}
-@keyframes runner-limb{from{transform:rotate(-25deg)}to{transform:rotate(25deg)}}
-@keyframes runner-bob{from{transform:translateY(0)}to{transform:translateY(-1.8px)}}
-@media(prefers-reduced-motion:reduce){.activity-route-runner .runner-body,.activity-route-runner .runner-arm-front,.activity-route-runner .runner-arm-back,.activity-route-runner .runner-leg-front,.activity-route-runner .runner-leg-back{animation:none}}
-
-/* Articulated profile runner: position belongs to Leaflet, pose to SVG. */
-.activity-route-runner{width:36px!important;height:45px!important;background:none!important;border:0!important;box-shadow:none!important}
-.activity-route-runner .runner-svg{width:36px;height:45px;transform:none;filter:drop-shadow(0 1px 1px #ffffff90);overflow:visible}
-.activity-route-runner .runner-svg g{stroke-linecap:round;stroke-linejoin:round}
-.activity-route-runner .runner-svg.is-route-animated g{animation:none!important}
+.route-progress-marker{display:grid;place-items:center;width:20px!important;height:20px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none}
+.route-progress-dot{position:relative;display:block;width:13px;height:13px;border:2px solid #fff;border-radius:50%;background:#078d79;box-shadow:0 1px 5px #073d36a3}
+.route-progress-dot::after{content:"";position:absolute;inset:-6px;border:2px solid #11b99c;border-radius:50%;animation:route-progress-pulse 1.35s ease-out infinite}
+@keyframes route-progress-pulse{0%{transform:scale(.55);opacity:.95}100%{transform:scale(1.35);opacity:0}}
+@media(prefers-reduced-motion:reduce){.route-progress-dot::after{animation:none;inset:-3px;opacity:.55}}
 
 .activity-action-menu-toggle{display:none}
 @media(max-width:720px){
