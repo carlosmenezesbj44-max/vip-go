@@ -920,6 +920,9 @@ body[data-page="Início"] .welcome p{font-size:13px}
 .admin-account-actions{gap:7px}
 .admin-participant-edit .password-visibility-toggle{min-height:36px!important;width:36px;padding:0!important}
 .admin-participant-edit .password-visibility-toggle svg{width:18px;height:18px}
+.community-carousel-heading .eyebrow{display:none}.community-carousel-heading h2{font-size:21px;letter-spacing:-.45px}.community-carousel-heading p{font-size:11px;color:var(--paper-muted)}
+.calendar-day.is-selected{background:#dff3e9!important;color:#12483a!important;box-shadow:inset 0 0 0 2px #2fa681!important}
+@media(max-width:720px){.community-carousel-heading h2{font-size:20px}.community-carousel-heading p{font-size:11px}.community-carousel-track:empty{min-height:0;padding:0}.community-carousel-controls:has(+ .community-carousel-track:empty){display:none}}
 .admin-account-action{min-height:40px;padding:9px 12px;border-color:#d7e9df;border-radius:10px;font-size:10px;white-space:nowrap}
 .admin-account-action:focus-visible,.admin-create-challenge-button:focus-visible{outline:3px solid #40c9a5;outline-offset:2px}
 .admin-participant-edit{gap:13px;padding:17px;border:1px solid #e1eee7;border-radius:12px;background:#f6faf7}
@@ -948,5 +951,222 @@ body[data-page="Início"] .welcome p{font-size:13px}
  .admin-account-form-actions button{width:100%}
  .admin-account-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
  .admin-account-action{min-width:0;width:100%;padding:9px 8px}
- .admin-account-copy strong{font-size:12px;overflow-wrap:anywhere}
+.admin-account-copy strong{font-size:12px;overflow-wrap:anywhere}
+}
+
+/* Club house: grounded forest surfaces, ivory paper and tactile controls. */
+:root{
+ --bg:#062f28;--panel:#073d32;--panel2:#104b3e;
+ --cyan:#48d7be;--blue:#087e69;--lime:#bedc64;
+ --white:#f5faf5;--muted:#b3c9bd;--text:#12382f;--soft:#f5faf5;
+ --line:rgba(209,233,218,.16);--paper-line:#d9e4da;
+ --paper-muted:#526b5b;--shadow:0 3px 12px rgba(0,24,17,.08);
+}
+body{background:var(--bg)}
+.main{padding:24px clamp(24px,2.8vw,40px) 40px;min-width:0}
+.sidebar{background:#052b24;padding-top:20px;border-color:var(--line)}
+.brand{padding-bottom:22px}
+.brand-logo-frame,.mobile-logo-frame{background:transparent;border:0;box-shadow:none}
+.nav-label{font-size:11px;letter-spacing:0;text-transform:none;color:var(--muted);padding-bottom:9px}
+.nav{gap:3px}
+.nav button{border-radius:6px;min-height:44px;padding:11px 13px;color:#b6cec1;transition:background .16s,color .16s}
+.nav button:hover{background:#10483b;color:var(--white)}
+.nav button.active{background:#174d40;color:#f5faf5;box-shadow:inset 3px 0 var(--cyan)}
+.week-card{margin:18px 4px;padding:16px;background:var(--panel);border-radius:8px;box-shadow:none}
+.week-card .overline{font-size:12px;text-transform:none;letter-spacing:0;color:#c2d5c9}
+.week-card strong{font-size:26px}
+.week-card p,.profile-mini small{color:#b3c9bd}
+.profile-mini{padding:14px 10px}
+.topbar{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.crumb{font-size:12px;color:#b3c9bd}
+.icon-btn{border-radius:7px;background:var(--panel);transition:background .16s,border-color .16s}
+.icon-btn:hover{background:#145242;border-color:#739e8a}
+.welcome{margin-bottom:20px}
+h1{font-size:clamp(28px,3.4vw,38px);letter-spacing:-1.1px;line-height:1.16}
+.welcome p,.community-page-heading p,.calendar-page-heading p,.challenge-toolbar p{color:#bbd0c4;line-height:1.55}
+.eyebrow{font-size:11px!important;letter-spacing:.01em!important;text-transform:none;color:#b3c9bd;font-weight:600}
+.eyebrow:before{display:none}
+.card .eyebrow,.goal-dialog .eyebrow,.admin-account-form-heading .eyebrow{color:#526b5b}
+.welcome .eyebrow{display:none}
+body[data-page="Início"] .welcome{margin:0 0 20px}
+body[data-page="Início"] .welcome h1{margin-top:0;font-size:clamp(28px,3vw,36px)}
+body[data-page="Início"] .welcome p{font-size:13px}
+.primary,.social-register-button,.admin-create-challenge-button,.challenge-publish-button{
+ background:var(--cyan);color:#07372b;border:1px solid transparent;border-radius:7px;box-shadow:none;
+ transition:background .16s,border-color .16s,transform .16s;
+}
+.primary:hover,.social-register-button:hover,.admin-create-challenge-button:hover,.challenge-publish-button:hover{
+ background:#6fe1ca;box-shadow:none;filter:none;transform:none;
+}
+.primary:active,.create-goal:active,.admin-create-challenge-button:active,.challenge-publish-button:active{transform:translateY(1px)}
+.primary.running{background:var(--lime)}
+button:disabled{cursor:not-allowed;opacity:.55;transform:none!important;box-shadow:none!important}
+button:focus-visible,a:focus-visible{outline:3px solid #6ce0c6;outline-offset:3px}
+.card,.social-profile-card,.social-feed-card,.social-people-card,.community-main-card,
+.community-create-card,.community-directory-card,.community-selected-card{
+ background:var(--soft);color:var(--text);border:1px solid var(--paper-line);border-radius:10px;box-shadow:var(--shadow);
+}
+.card-head{padding-top:18px;padding-bottom:14px}
+.card-head h2,.goal-heading h2,.social-feed-heading h2{color:var(--text);font-weight:800}
+.subtle,.activity p,.activity-metrics small,.goal-heading p,.goal-numbers span,.goal-foot,
+.feed-copy small,.leader-name small,.leader-score small,.demo-note{color:var(--paper-muted)}
+.text-btn{color:#087660;font-size:12px}
+.activity,.feed-item,.leader-row,.social-person,.social-post,.social-profile-stats,
+.social-feed-heading,.community-selected-heading{border-color:var(--paper-line)}
+.stats{gap:0;margin-bottom:22px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.stat{border:0;border-radius:0;background:transparent;min-height:96px;padding:16px 18px}
+.stat+.stat{border-left:1px solid var(--line)}
+.stat:after{display:none}
+.stat-top{color:#c0d5c8}
+.stat-icon{background:transparent;color:#72ddc5;border-radius:0}
+.stat strong{font-size:27px}
+.stat strong span{color:#b3c9bd}
+.bar,.goal-card .bar,.participant-challenge-bar{border-radius:3px}
+.bar i,.goal-card .bar i,.participant-challenge-bar i{background:#2ab499;border-radius:3px}
+.goal-badge{background:#e6efcc;color:#4a641e;border-radius:5px;padding:6px 8px;font-size:11px}
+.activity-icon{border-radius:7px;background:#e5eee3;color:#087660}
+.challenge{background:#0a5846;border-color:#2b6e58;border-radius:10px}
+.challenge:after{display:none}
+.challenge p,.challenge-facts,.challenge-foot small{color:#c5dfd2}
+.challenge-status{border-radius:4px;letter-spacing:0;background:#174d36;color:#d7ebaa}
+.challenge-progress .bar i{background:var(--lime)}
+.outline-light,.create-goal,.cancel-goal,.dialog-close,.social-follow-button,.social-following-button,
+.community-open-button,.community-join-button,.admin-account-action{border-radius:6px;box-shadow:none}
+.create-goal{background:#deeee4;color:#0b725c;font-size:11px;transition:background .16s}
+.create-goal:hover{background:#cde6d7;transform:none;box-shadow:none}
+.score-guide span{border-radius:4px;background:#eaf0e7;color:#526b5b}
+.social-layout{grid-template-columns:190px minmax(0,1fr) 240px;gap:16px}
+.social-profile-cover{height:60px;background:#235847;border-bottom:1px solid #426958}
+.social-profile-cover:after{display:none}
+.social-profile-cover span{letter-spacing:.08em;color:#dce9dd;font-size:10px}
+.social-profile-avatar{border-color:var(--soft);box-shadow:none}
+.social-profile-body{padding:0 14px 16px}
+.social-profile-body h2{font-size:17px}
+.social-profile-stats{padding:12px 0}
+.social-profile-stats div+div{border-color:var(--paper-line)}
+.social-profile-stats strong{font-size:18px}
+.social-profile-stats span{color:var(--paper-muted)}
+.social-feed-heading{padding:19px 20px 16px;align-items:center}
+.social-feed-heading h2{margin:0 0 5px;font-size:22px;letter-spacing:-.6px}
+.social-feed-heading .eyebrow{display:none}
+.social-feed-heading p{font-size:12px;color:var(--paper-muted)}
+.social-feed-heading .community-private-note{padding:0;background:transparent;border:0;color:#526b5b;font-size:10px}
+.social-feed-list{padding:3px 20px 10px}
+.social-post{padding:20px 0}
+.social-post-author strong{font-size:13px}
+.social-post-author small,.social-person-info small{color:var(--paper-muted)}
+.social-post-metrics{gap:16px;flex-wrap:wrap}
+.social-post-metrics span{padding:0;background:transparent;border-radius:0;color:#426552;font-size:12px}
+.social-post-media img,.social-post-media video{border-radius:6px}
+.social-people-card .card-head{padding:18px 15px 14px}
+.social-people-card .card-head h3{font-size:14px;line-height:1.35}
+.social-people-list{padding:0 15px 12px}
+.social-person-info strong{font-size:12px}
+.social-follow-button{background:#126e58;color:#fff;min-height:40px}
+.social-follow-button:hover{background:#0b5c49;transform:none}
+.social-following-button{background:#e5eee3;color:#375d48;min-height:40px}
+.social-invite-card{background:#e8efe0;border-color:#c9d8c0;border-radius:8px;padding:16px 14px}
+.social-invite-icon{background:transparent;border-radius:0;color:#396b4a}
+.social-invite-card strong{font-size:12px}
+.social-invite-card p{font-size:11px;color:#526b5b}
+.social-home .activity-empty{padding:22px 0;color:#526b5b}
+.social-home .activity-empty strong{font-size:14px;line-height:1.4}
+.social-home .activity-empty span{font-size:12px}
+.community-composer.premium-form{background:#edf3eb;border:1px solid var(--paper-line);border-radius:7px;box-shadow:none;padding:13px}
+.community-composer.premium-form textarea{background:#fff;border-radius:6px;min-height:100px}
+.community-private-note{border-radius:5px}
+.community-carousel-slide,.community-directory-item,.community-unselected>span{border-radius:7px}
+.workspace-tabs{gap:4px;padding:0;border-color:var(--line);margin:10px 0 20px}
+.workspace-tab{border:0;border-bottom:2px solid transparent;border-radius:0;padding:12px 15px;color:#bfd2c5;box-shadow:none}
+.workspace-tab.active{background:transparent;color:var(--cyan);border-bottom-color:var(--cyan);box-shadow:none}
+.workspace-tab:hover{background:#ffffff08}
+.profile-settings .workspace-tabs{border-color:var(--paper-line)}
+.profile-settings .workspace-tab{color:#526b5b}
+.profile-settings .workspace-tab.active{color:#076c56;border-bottom-color:#0b886e}
+.profile-settings .workspace-tab:hover{background:#e6eee4}
+.calendar-summary{gap:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.calendar-summary article{border:0;border-radius:0;background:transparent}
+.calendar-summary article+article{border-left:1px solid var(--line)}
+.calendar-summary article span{color:#bfd2c5}
+.calendar-day,.calendar-day-placeholder{border-radius:5px}
+.premium-form :is(input:not([type=checkbox]):not([type=file]),select,textarea),
+.admin-account-form-grid input,.admin-account-form-grid select,.admin-participant-edit input:not([type=file]),.admin-participant-edit select{border-radius:6px;border-color:#cbdacb}
+.premium-form :is(input,select,textarea):focus-visible,
+.admin-account-form-grid input:focus-visible,.admin-account-form-grid select:focus-visible,
+.admin-participant-edit input:focus-visible,.admin-participant-edit select:focus-visible{
+ outline:2px solid #168e72;outline-offset:2px;border-color:#168e72;box-shadow:none;
+}
+.profile-photo-settings,.profile-settings .privacy-toggle,.join-company.premium-form,.team-settings.premium-form,
+.admin-config.premium-form,.admin-teams.premium-form,.admin-admins,.admin-create-admin-form.premium-form,
+.admin-account-form,.admin-participant-row,.map-finish.premium-form,
+.activity-dialog .activity-indoor-start,.activity-media-dropzone,.activity-share-card{
+ background:var(--soft);border-radius:8px;box-shadow:none;border-color:var(--paper-line);
+}
+.admin-participant-row{background:#fcfdf9}
+.admin-participant-row:hover,.admin-participant-row.is-editing{border-color:#93b7a0;box-shadow:none}
+.admin-account-avatar{box-shadow:none;border-color:#dde9d9}
+.admin-account-meta-item,.admin-account-role{border-radius:4px}
+.admin-account-security-note{border-radius:6px;background:#edf3e8}
+.admin-account-security-note small,.admin-account-copy small,.admin-account-edit-heading small{color:#526b5b}
+.admin-account-action.is-danger{color:#9b4035;border-color:#e2c8c1}
+.admin-create-admin-form.premium-form .create-goal,.admin-config.premium-form .create-goal,
+.admin-teams.premium-form .create-goal,.join-company.premium-form .create-goal,.team-settings.premium-form .create-goal{
+ background:var(--cyan);border-radius:6px;box-shadow:none;
+}
+.admin-create-admin-form.premium-form .create-goal:hover,.admin-config.premium-form .create-goal:hover,
+.admin-teams.premium-form .create-goal:hover,.join-company.premium-form .create-goal:hover,.team-settings.premium-form .create-goal:hover{
+ background:#6fe1ca;box-shadow:none;transform:none;
+}
+.challenge-workspace .admin-challenges,.challenge-compose-preview{border-radius:10px;box-shadow:none}
+.challenge-builder-heading{background:#eaf1e6}
+.challenge-builder-icon{background:#14735b;border-radius:7px;box-shadow:none}
+.challenge-compose-preview{background:var(--panel);border-color:#356352}
+.participant-challenge-cover.is-placeholder,.challenge-preview-cover.is-placeholder{background:#225a48}
+.challenge-preview-card,.participant-challenge{border-radius:8px}
+.goal-dialog,.activity-dialog.premium-form{border-radius:12px;background:var(--soft);box-shadow:0 16px 48px #00170e55}
+.goal-dialog::backdrop{background:#031c18bb;backdrop-filter:none}
+.activity-dialog .dialog-actions{background:var(--soft)}
+.community-photo-button,.profile-photo-upload,.map-media-button{border-radius:6px!important}
+.toast{border:1px solid var(--paper-line);border-radius:7px;background:var(--soft);box-shadow:0 4px 20px #00170e26;max-width:calc(100vw - 32px);text-align:center}
+@media(max-width:1120px){
+ .social-layout{grid-template-columns:minmax(0,1fr) 240px;gap:15px}
+ .social-profile-cover{height:44px}
+ .social-profile-body{padding:0 16px 14px}
+ .social-profile-body h2{font-size:15px}
+ .social-profile-stats{padding:0}
+}
+@media(max-width:960px){
+ .main{padding:22px 26px calc(var(--mobile-nav-content-height) + 22px + env(safe-area-inset-bottom))}
+ .mobile-nav{background:#052f27;backdrop-filter:none;border-top-color:#426553}
+ .mobile-nav button{border-radius:4px;color:#bfcec3;font-weight:600}
+ .mobile-nav button.active{color:#73e2c7;background:#174d40}
+ .mobile-nav button:hover{background:#174d40}
+}
+@media(max-width:720px){
+ .main{padding:16px 14px calc(var(--mobile-nav-content-height) + 18px + env(safe-area-inset-bottom))}
+ .topbar{margin-bottom:20px;padding-bottom:12px}
+ .mobile-logo-frame{width:78px}
+ .welcome{gap:14px}
+ body[data-page="Início"] .welcome h1{font-size:28px}
+ body[data-page="Início"] .welcome p{font-size:12px}
+ .welcome .primary{min-height:44px}
+ .stats{gap:0}
+ .stats .stat{border-radius:0;padding:12px 9px}
+ .stat-top{gap:4px}
+ .social-layout{grid-template-columns:minmax(0,1fr);gap:14px}
+ .social-profile-cover{height:36px}
+ .social-profile-body{grid-template-columns:48px minmax(0,1fr) auto;padding:0 13px 13px;gap:2px 9px}
+ .social-profile-body h2{font-size:13px}
+ .social-profile-stats{gap:12px}
+ .social-profile-stats strong{font-size:14px}
+ .social-feed-heading{padding:17px 15px 14px;align-items:flex-start;gap:10px}
+ .social-feed-heading h2{font-size:21px}
+ .social-feed-heading .community-private-note{max-width:95px;font-size:10px}
+ .social-feed-list{padding:3px 15px 10px}
+ .social-post-metrics{gap:13px}
+ .community-composer{margin-left:15px;margin-right:15px}
+ .social-follow-button,.social-following-button{min-height:44px}
+ .workspace-tab{min-height:44px;padding:12px 11px;font-size:12px}
+ .calendar-summary{gap:0}
+ .calendar-summary article span{font-size:11px}
 }
