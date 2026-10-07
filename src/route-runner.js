@@ -1,4 +1,12 @@
-const MARKER_HTML = '<span class="route-progress-dot" aria-hidden="true"></span>';
+const MARKER_HTML = '<span class="route-progress-distance" hidden></span><span class="route-progress-dot" aria-hidden="true"></span>';
+
+export function setProgressMarkerDistance(marker, meters) {
+  const label = marker?.getElement()?.querySelector('.route-progress-distance');
+  if (!label) return;
+  const milestone = Math.floor(Math.max(0, meters) / 100) * 100;
+  label.hidden = milestone < 100;
+  if (milestone >= 100) label.textContent = `${milestone.toLocaleString('pt-BR')} m`;
+}
 
 const radians = Math.PI / 180;
 function metersBetween(a, b) {
@@ -45,7 +53,7 @@ export function createProgressMarker(L, map, point) {
   return L.marker(latlng, { icon: createProgressIcon(L), interactive: false, zIndexOffset: 1000 }).addTo(map);
 }
 
-export function animateRouteMarker(L, map, route, duration = 4200) {
+export function animateRouteMarker(L, map, route, duration = 8500) {
   const coordinates = route.map((point) => Array.isArray(point) ? point : [Number(point.lat), Number(point.lng)]);
   if (coordinates.length < 2) return { marker: null, stop() {} };
   const lengths = [];
@@ -77,6 +85,7 @@ export function animateRouteMarker(L, map, route, duration = 4200) {
     const a = coordinates[segment];
     const b = coordinates[segment + 1];
     marker.setLatLng([a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]);
+    setProgressMarkerDistance(marker, distance);
     frame = requestAnimationFrame(animate);
   };
   frame = requestAnimationFrame(animate);

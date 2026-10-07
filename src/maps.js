@@ -1,5 +1,5 @@
 import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
-import { addDistanceMarkers, animateRouteMarker, createProgressMarker } from './route-runner.js';
+import { addDistanceMarkers, animateRouteMarker, createProgressMarker, setProgressMarkerDistance } from './route-runner.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -578,6 +578,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     liveRoute.setLatLngs(smoothRouteForDisplay(points).map((entry) => [entry.lat, entry.lng]));
     if (locationMarker) locationMarker.setLatLng([lat, lng]);
     else locationMarker = createProgressMarker(L, map, [lat, lng]);
+    setProgressMarkerDistance(locationMarker, meters);
     map.panTo([lat, lng]);
     updateStats();
     status(`Gravando percurso · ${points.length} pontos coletados.`);
