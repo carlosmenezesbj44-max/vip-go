@@ -1,4 +1,5 @@
 import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
+import { animateRouteRunner, createRunnerMarker } from './route-runner.js';
 
 const $ = (id) => document.getElementById(id);
 const radians = Math.PI / 180;
@@ -108,6 +109,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   let meters = 0;
   let communityRoutes = [];
   let selected = null;
+  let selectedRouteRunner = null;
   let heartRateDevice = null;
   let heartRateCharacteristic = null;
   let heartRateCount = 0;
@@ -170,7 +172,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     shownRoute = L.polyline([], { color: '#fa8b45', weight: 5, opacity: 0.9 }).addTo(map);
     routeDistanceDots = L.layerGroup().addTo(map);
     liveParticipantLayer = L.layerGroup().addTo(map);
-    liveRoute = L.polyline([], { color: '#00dfc1', weight: 6, opacity: 0.95 }).addTo(map);
+    liveRoute = L.polyline([], { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(map);
   }
 
   function openActivityPreview() {
@@ -204,7 +206,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
   function updatePreviewRoute() {
     if (previewStart && previewEnd) {
       if (previewRoute) previewRoute.setLatLngs([previewStart, previewEnd]);
-      else previewRoute = L.polyline([previewStart, previewEnd], { color: '#079a77', weight: 5, dashArray: '8 8' }).addTo(previewMap);
+      else previewRoute = L.polyline([previewStart, previewEnd], { color: '#079d8a', weight: 4, dashArray: '8 8', lineJoin: 'round' }).addTo(previewMap);
       previewMap.fitBounds([previewStart, previewEnd], { padding: [30, 30] });
       $('activityPreviewStatus').textContent = 'Saída e destino marcados. A linha é direta entre os pontos; o percurso real será gravado pelo GPS.';
     } else if (choosingPreviewPoint) {
@@ -387,6 +389,8 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     $('mapAccuracy').closest('div').hidden = false;
     resetHeartRateStats();
     liveRoute?.setLatLngs([]);
+    locationMarker?.remove();
+    locationMarker = null;
     plannedRouteLayer?.remove();
     plannedStartMarker?.remove();
     plannedEndMarker?.remove();
@@ -409,7 +413,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       const userId = String(participant.userId);
       let marker = liveParticipantMarkers.get(userId);
       if (!marker) {
-        marker = L.circleMarker([participant.lat, participant.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#ec5364', fillOpacity: 1 }).addTo(liveParticipantLayer);
+        marker = createRunnerMarker(L, liveParticipantLayer, [participant.lat, participant.lng]);
         marker.bindTooltip(participant.name, { direction: 'top', opacity: 0.95 });
         liveParticipantMarkers.set(userId, marker);
       } else marker.setLatLng([participant.lat, participant.lng]);
@@ -456,7 +460,9 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     ensureMap();
     if (!map || !Array.isArray(route) || route.length < 2) return;
     selected = { type, id };
-    const color = type === 'mine' ? '#00bca2' : '#fa8b45';
+    selectedRouteRunner?.stop();
+    selectedRouteRunner = null;
+    const color = '#079d8a';
     const displayRoute = isRoadMatched ? route : smoothRouteForDisplay(route);
     shownRoute.setStyle({ color });
     shownRoute.setLatLngs(displayRoute.map((point) => [point.lat, point.lng]));
@@ -471,6 +477,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
       }).bindTooltip(`${marker.distance} m`, { direction: 'top', opacity: 0.95 }).addTo(routeDistanceDots);
     }
     map.fitBounds(shownRoute.getBounds(), { padding: [35, 35], maxZoom: 16 });
+    selectedRouteRunner = animateRouteRunner(L, map, displayRoute);
     document.querySelectorAll('.map-route-row').forEach((row) => row.classList.toggle('selected', row.dataset.routeId === String(id) && row.dataset.routeType === type));
   }
 
@@ -577,7 +584,7 @@ export function createMapsController({ api, readActivities, loadAccountData, sho
     publishLiveLocation(point);
     liveRoute.setLatLngs(smoothRouteForDisplay(points).map((entry) => [entry.lat, entry.lng]));
     if (locationMarker) locationMarker.setLatLng([lat, lng]);
-    else locationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#00d9bc', fillOpacity: 1 }).addTo(map);
+    else locationMarker = createRunnerMarker(L, map, [lat, lng]);
     map.panTo([lat, lng]);
     updateStats();
     status(`Gravando percurso · ${points.length} pontos coletados.`);

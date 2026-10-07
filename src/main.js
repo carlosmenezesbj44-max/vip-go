@@ -1,4 +1,5 @@
 import { createMapsController } from './maps.js';
+import { animateRouteRunner } from './route-runner.js';
 import * as L from '../assets/vendor/leaflet/leaflet-src.esm.js';
 import { setupPasswordVisibility } from './password-visibility.js';
 import '../assets/vendor/leaflet/leaflet.css';
@@ -16,7 +17,6 @@ let editingActivityId = null;
 let activityViewMap;
 let activityViewRouteLayer;
 let activityViewRunner;
-let activityViewAnimationFrame;
 let communityPhotoFiles = [];
 let communityCommentState = new Map();
 let activeCommunityId = null;
@@ -1499,61 +1499,10 @@ function openActivityView(activity) {
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(activityViewMap);
     }
     if (activityViewRouteLayer) activityViewRouteLayer.remove();
-    if (activityViewRunner) activityViewRunner.remove();
-    if (activityViewAnimationFrame) cancelAnimationFrame(activityViewAnimationFrame);
+    activityViewRunner?.stop();
     activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
-    const runnerIcon = L.divIcon({ className: 'activity-route-runner', html: '<svg class="runner-svg" viewBox="0 0 64 80" aria-hidden="true"><g class="runner-facing"><g class="runner-athlete"><g data-limb="back-leg" transform="translate(29 43)"><path d="M0 0L0 14" stroke="#243c4d" stroke-width="8"/><g data-joint="back-knee" transform="translate(0 14)"><path d="M0 0L0 14" stroke="#b97550" stroke-width="5"/><path d="M-2 14h8" stroke="#eee" stroke-width="5"/></g></g><g data-limb="back-arm" transform="translate(33 25)"><path d="M0 0L0 11" stroke="#b97550" stroke-width="5"/><g transform="translate(0 11) rotate(-85)"><path d="M0 0L0 10" stroke="#b97550" stroke-width="4"/></g></g><path d="M33 23Q39 25 35 33L32 43 23 41 28 27Z" fill="#06ad92"/><path d="M24 39l10 2-3 7-10-3Z" fill="#19334a"/><g data-limb="front-leg" transform="translate(28 43)"><path d="M0 0L0 14" stroke="#243c4d" stroke-width="8"/><g data-joint="front-knee" transform="translate(0 14)"><path d="M0 0L0 14" stroke="#e4a174" stroke-width="5"/><path d="M-2 14h9" stroke="#f9f9f4" stroke-width="5"/><path d="M-2 16h9" stroke="#ff7045" stroke-width="2"/></g></g><path d="M34 24l2-7" stroke="#e4a174" stroke-width="5"/><path d="M33 9q10-3 10 6l-1 5-8 1-3-6Z" fill="#e4a174"/><path d="M31 13q-2-8 7-7 7 0 6 7l-6-2-5 5Z" fill="#24313a"/><g data-limb="front-arm" transform="translate(33 26)"><path d="M0 0L0 11" stroke="#e4a174" stroke-width="5"/><g transform="translate(0 11) rotate(-85)"><path d="M0 0L0 10" stroke="#e4a174" stroke-width="4"/><circle cy="10" r="2.5" fill="#e4a174"/></g></g></g></g></svg>', iconSize: [36, 45], iconAnchor: [18, 40] });
-    activityViewRunner = L.marker([route[0].lat, route[0].lng], { icon: runnerIcon, interactive: false, zIndexOffset: 1000 }).addTo(activityViewMap);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
-    const routeCoordinates = route.map((point) => [Number(point.lat), Number(point.lng)]);
-    const segmentLengths = [];
-    let totalRouteLength = 0;
-    for (let index = 1; index < routeCoordinates.length; index += 1) {
-      const [latA, lngA] = routeCoordinates[index - 1];
-      const [latB, lngB] = routeCoordinates[index];
-      const latDelta = (latB - latA) * Math.PI / 180;
-      const lngDelta = (lngB - lngA) * Math.PI / 180;
-      const haversine = Math.sin(latDelta / 2) ** 2 + Math.cos(latA * Math.PI / 180) * Math.cos(latB * Math.PI / 180) * Math.sin(lngDelta / 2) ** 2;
-      const length = 6371000 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
-      segmentLengths.push(length);
-      totalRouteLength += length;
-    }
-    let previousFrame = 0;
-    let progressDistance = 0;
-    const lapDuration = 4200;
-    const animateRunner = (now) => {
-      if (!activityViewRunner || !activityViewMap) return;
-      if (previousFrame) progressDistance = (progressDistance + totalRouteLength * (now - previousFrame) / lapDuration) % totalRouteLength;
-      previousFrame = now;
-      let remaining = progressDistance;
-      let segment = 0;
-      while (segment < segmentLengths.length - 1 && remaining > segmentLengths[segment]) {
-        remaining -= segmentLengths[segment];
-        segment += 1;
-      }
-      const length = segmentLengths[segment] || 1;
-      const fraction = Math.min(1, remaining / length);
-      const a = routeCoordinates[segment];
-      const b = routeCoordinates[segment + 1];
-      activityViewRunner.setLatLng([a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]);
-      const sprite = activityViewRunner.getElement()?.querySelector('.runner-svg');
-      if (sprite) {
-        const phase = now / 650 * Math.PI * 2;
-        // Mirror horizontally only: keep the athlete upright on every turn.
-        if (Math.abs(b[1] - a[1]) > 0.000001) sprite.querySelector('.runner-facing').setAttribute('transform', b[1] > a[1] ? '' : 'translate(64 0) scale(-1 1)');
-        sprite.querySelector('.runner-athlete').setAttribute('transform', `translate(0 ${-1.5 * Math.cos(phase * 2)})`);
-        for (const [side, offset] of [['front', 0], ['back', Math.PI]]) {
-          const step = phase + offset;
-          const thigh = -38 * Math.sin(step);
-          const knee = 22 + 68 * Math.max(0, Math.cos(step));
-          sprite.querySelector(`[data-limb="${side}-leg"]`).setAttribute('transform', `translate(${side === 'front' ? 28 : 29} 43) rotate(${thigh})`);
-          sprite.querySelector(`[data-joint="${side}-knee"]`).setAttribute('transform', `translate(0 14) rotate(${knee})`);
-          sprite.querySelector(`[data-limb="${side}-arm"]`).setAttribute('transform', `translate(33 26) rotate(${32 * Math.sin(step) + 8})`);
-        }
-      }
-      activityViewAnimationFrame = requestAnimationFrame(animateRunner);
-    };
-    activityViewAnimationFrame = requestAnimationFrame(animateRunner);
+    activityViewRunner = animateRouteRunner(L, activityViewMap, route);
     setTimeout(() => activityViewMap.invalidateSize(), 50);
   }
   const media = document.getElementById('activityViewMedia');
@@ -1661,7 +1610,7 @@ document.getElementById('openActivity').addEventListener('click', openActivityFo
 document.getElementById('historyRegister').addEventListener('click', openActivityForm);
 document.getElementById('activityClose').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityViewClose').addEventListener('click', () => activityViewDialog.close());
-activityViewDialog.addEventListener('close', () => { if (activityViewAnimationFrame) cancelAnimationFrame(activityViewAnimationFrame); activityViewAnimationFrame = null; });
+activityViewDialog.addEventListener('close', () => { activityViewRunner?.stop(); activityViewRunner = null; });
 activityViewDialog.addEventListener('click', (event) => { if (event.target === activityViewDialog) activityViewDialog.close(); });
 document.getElementById('activityCancel').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityStartTimer').addEventListener('click', () => {
