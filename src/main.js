@@ -15,6 +15,8 @@ let activityCache = null;
 let editingActivityId = null;
 let activityViewMap;
 let activityViewRouteLayer;
+let activityViewRunner;
+let activityViewAnimationFrame;
 let communityPhotoFiles = [];
 let communityCommentState = new Map();
 let activeCommunityId = null;
@@ -1479,8 +1481,27 @@ function openActivityView(activity) {
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(activityViewMap);
     }
     if (activityViewRouteLayer) activityViewRouteLayer.remove();
+    if (activityViewRunner) activityViewRunner.remove();
+    if (activityViewAnimationFrame) cancelAnimationFrame(activityViewAnimationFrame);
     activityViewRouteLayer = L.polyline(route.map((point) => [point.lat, point.lng]), { color: '#079d8a', weight: 4, opacity: 0.95, lineJoin: 'round' }).addTo(activityViewMap);
+    const runnerIcon = L.divIcon({ className: 'activity-route-runner', html: '<span aria-hidden="true">🏃</span>', iconSize: [28, 28], iconAnchor: [14, 14] });
+    activityViewRunner = L.marker([route[0].lat, route[0].lng], { icon: runnerIcon, interactive: false, zIndexOffset: 1000 }).addTo(activityViewMap);
     activityViewMap.fitBounds(activityViewRouteLayer.getBounds(), { padding: [18, 18], maxZoom: 16 });
+    const routeCoordinates = route.map((point) => [Number(point.lat), Number(point.lng)]);
+    const startedAt = performance.now();
+    const duration = Math.max(2600, Math.min(9000, routeCoordinates.length * 130));
+    const animateRunner = (now) => {
+      if (!activityViewRunner || !activityViewDialog.open) return;
+      const progress = ((now - startedAt) % (duration + 900)) / duration;
+      const eased = progress <= 1 ? progress : 1;
+      const segment = Math.min(routeCoordinates.length - 2, Math.floor(eased * (routeCoordinates.length - 1)));
+      const local = eased * (routeCoordinates.length - 1) - segment;
+      const a = routeCoordinates[segment];
+      const b = routeCoordinates[Math.min(routeCoordinates.length - 1, segment + 1)];
+      activityViewRunner.setLatLng([a[0] + (b[0] - a[0]) * local, a[1] + (b[1] - a[1]) * local]);
+      activityViewAnimationFrame = requestAnimationFrame(animateRunner);
+    };
+    activityViewAnimationFrame = requestAnimationFrame(animateRunner);
     setTimeout(() => activityViewMap.invalidateSize(), 50);
   }
   const media = document.getElementById('activityViewMedia');
@@ -1588,6 +1609,7 @@ document.getElementById('openActivity').addEventListener('click', openActivityFo
 document.getElementById('historyRegister').addEventListener('click', openActivityForm);
 document.getElementById('activityClose').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityViewClose').addEventListener('click', () => activityViewDialog.close());
+activityViewDialog.addEventListener('close', () => { if (activityViewAnimationFrame) cancelAnimationFrame(activityViewAnimationFrame); activityViewAnimationFrame = null; });
 activityViewDialog.addEventListener('click', (event) => { if (event.target === activityViewDialog) activityViewDialog.close(); });
 document.getElementById('activityCancel').addEventListener('click', () => activityDialog.close());
 document.getElementById('activityStartTimer').addEventListener('click', () => {
