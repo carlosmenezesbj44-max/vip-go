@@ -80,6 +80,36 @@ function campaignAdminRequired(req, res, next) {
   next();
 }
 
+function adminAccountsPayload() {
+  return {
+    accounts: statements.allAccountsForAdmin.all().map(({ profilePhoto, ...account }) => ({
+      ...account,
+      profilePhoto: profilePhoto ? `/api/admin/accounts/${account.id}/photo` : null,
+    })),
+    companies: statements.allCompaniesForAdmin.all(),
+    teams: statements.teamsForAllCompanies.all(),
+  };
+}
+
+function parseAdminPhoto(data) {
+  if (data === undefined || data === null || data === '') return null;
+  const match = typeof data === 'string' && data.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return { error: 'Escolha uma foto JPG, PNG ou WebP.' };
+  const buffer = Buffer.from(match[2], 'base64');
+  if (!buffer.length || buffer.length > 5 * 1024 * 1024) return { error: 'A foto deve ter no máximo 5 MB.' };
+  return { buffer, extension: { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[match[1]] };
+}
+
+async function saveAdminPhoto(userId, photo) {
+  if (!photo) return;
+  const previous = statements.profilePhotoForAdmin.get(userId)?.profilePhoto;
+  await mkdir(uploadsDirectory, { recursive: true });
+  const filename = `${randomBytes(18).toString('hex')}.${photo.extension}`;
+  await writeFile(resolve(uploadsDirectory, filename), photo.buffer, { flag: 'wx' });
+  statements.updateProfilePhoto.run(filename, userId);
+  if (previous && /^[a-f0-9]{36}\.(jpg|png|webp)$/.test(previous)) await unlink(resolve(uploadsDirectory, previous)).catch(() => {});
+}
+
 function validActivity(body) {
   const modes = ['Caminhada', 'Corrida', 'Ciclismo'];
   if (!body || !modes.includes(body.mode)) return 'Tipo de atividade inválido.';
@@ -708,10 +738,43 @@ app.post('/api/admin/admins', authRequired, campaignAdminRequired, async (req, r
 });
 
 app.get('/api/admin/participants', authRequired, campaignAdminRequired, (req, res) => {
-  res.json({ participants: statements.allAccountsForAdmin.all(), teams: statements.teamsForAllCompanies.all() });
+  res.json(adminAccountsPayload());
 });
 
-app.put('/api/admin/participants/:id', authRequired, campaignAdminRequired, (req, res) => {
+app.get('/api/admin/accounts/:id/photo', authRequired, campaignAdminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  const filename = Number.isInteger(id) ? statements.profilePhotoForAdmin.get(id)?.profilePhoto : null;
+  if (!filename || !/^[a-f0-9]{36}\.(jpg|png|webp)$/.test(filename)) return res.status(404).end();
+  res.type(({ jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' })[filename.split('.').pop()]);
+  res.set('Cache-Control', 'private, max-age=300');
+  createReadStream(resolve(uploadsDirectory, filename)).on('error', () => { if (!res.headersSent) res.status(404).end(); }).pipe(res);
+});
+
+app.post('/api/admin/accounts', authRequired, campaignAdminRequired, async (req, res, next) => {
+  try {
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const companyId = req.body?.companyId === null || req.body?.companyId === '' ? null : Number(req.body?.companyId);
+    const teamId = req.body?.teamId === null || req.body?.teamId === '' ? null : Number(req.body?.teamId);
+    if (name.length < 2 || name.length > 60) return res.status(400).json({ error: 'O nome deve ter de 2 a 60 caracteres.' });
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail válido.' });
+    if (password.length < 8 || password.length > 128) return res.status(400).json({ error: 'A senha deve ter de 8 a 128 caracteres.' });
+    if (companyId !== null && (!Number.isInteger(companyId) || !statements.companyById.get(companyId))) return res.status(400).json({ error: 'Selecione um grupo válido.' });
+    if (teamId !== null && (!companyId || !Number.isInteger(teamId) || !statements.teamByIdAndCompany.get(teamId, companyId))) return res.status(400).json({ error: 'Selecione uma equipe do grupo escolhido.' });
+    const photo = parseAdminPhoto(req.body?.profilePhotoData);
+    if (photo?.error) return res.status(400).json({ error: photo.error });
+    if (statements.userByEmail.get(email)) return res.status(409).json({ error: 'Esse e-mail já está cadastrado.' });
+    const passwordHash = await bcrypt.hash(password, 12);
+    const result = statements.createUser.run({ name, email, passwordHash, companyId });
+    const userId = Number(result.lastInsertRowid);
+    if (teamId !== null) statements.createAccountTeam.run(teamId, userId, companyId);
+    if (photo) await saveAdminPhoto(userId, photo);
+    res.status(201).json(adminAccountsPayload());
+  } catch (error) { next(error); }
+});
+
+app.put('/api/admin/participants/:id', authRequired, campaignAdminRequired, async (req, res, next) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Participante inválido.' });
   const participant = statements.accountForAdminById.get(id);
@@ -719,15 +782,42 @@ app.put('/api/admin/participants/:id', authRequired, campaignAdminRequired, (req
 
   const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const companyId = req.body?.companyId === null || req.body?.companyId === '' ? null : Number(req.body?.companyId);
   const teamId = req.body?.teamId === null || req.body?.teamId === '' ? null : Number(req.body?.teamId);
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
   if (name.length < 2 || name.length > 60) return res.status(400).json({ error: 'O nome deve ter de 2 a 60 caracteres.' });
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail válido.' });
-  if (teamId !== null && (!Number.isInteger(teamId) || !participant.companyId || !statements.teamByIdAndCompany.get(teamId, participant.companyId))) return res.status(400).json({ error: 'Selecione uma equipe do grupo atual da conta.' });
+  if (companyId !== null && (!Number.isInteger(companyId) || !statements.companyById.get(companyId))) return res.status(400).json({ error: 'Selecione um grupo válido.' });
+  if (teamId !== null && (!Number.isInteger(teamId) || !companyId || !statements.teamByIdAndCompany.get(teamId, companyId))) return res.status(400).json({ error: 'Selecione uma equipe do grupo escolhido.' });
+  if (password && (password.length < 8 || password.length > 128)) return res.status(400).json({ error: 'A nova senha deve ter de 8 a 128 caracteres.' });
   const existing = statements.userByEmail.get(email);
   if (existing && existing.id !== id) return res.status(409).json({ error: 'Esse e-mail já está sendo usado por outra conta.' });
+  const photo = parseAdminPhoto(req.body?.profilePhotoData);
+  if (photo?.error) return res.status(400).json({ error: photo.error });
+  try {
+    statements.updateAccountForAdmin.run(name, email, companyId, teamId, id);
+    if (password) {
+      statements.updateAccountPassword.run(await bcrypt.hash(password, 12), id);
+      statements.revokeOtherAccountSessions.run(id, req.sessionID);
+    }
+    if (photo) await saveAdminPhoto(id, photo);
+    res.json(adminAccountsPayload());
+  } catch (error) { next(error); }
+});
 
-  statements.updateAccountForAdmin.run(name, email, teamId, id);
-  res.json({ participants: statements.allAccountsForAdmin.all(), teams: statements.teamsForAllCompanies.all() });
+app.delete('/api/admin/participants/:id', authRequired, campaignAdminRequired, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Cadastro inválido.' });
+  if (id === req.session.userId) return res.status(400).json({ error: 'Você não pode excluir a própria conta nesta área.' });
+  if (!statements.accountForAdminById.get(id)) return res.status(404).json({ error: 'Cadastro não encontrado.' });
+  const adminState = statements.accountIsAdmin.get(id, id);
+  if (adminState?.isAdmin) return res.status(409).json({ error: 'Contas com acesso administrativo não podem ser excluídas por esta tela.' });
+  liveActivityLocations.delete(id);
+  const profilePhoto = statements.profilePhotoForAdmin.get(id)?.profilePhoto;
+  statements.revokeAccountSessions.run(id);
+  statements.deleteAccount.run(id);
+  if (profilePhoto && /^[a-f0-9]{36}\.(jpg|png|webp)$/.test(profilePhoto)) unlink(resolve(uploadsDirectory, profilePhoto)).catch(() => {});
+  res.json(adminAccountsPayload());
 });
 
 app.put('/api/admin/campaign', authRequired, campaignAdminRequired, (req, res) => {

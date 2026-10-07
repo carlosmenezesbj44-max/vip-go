@@ -153,6 +153,7 @@ body{background:radial-gradient(ellipse at 12% 0%,#0d5346 0,transparent 36%),rad
 .admin-heading-actions{display:flex;align-items:center;gap:10px}.admin-create-challenge-button{border:0;border-radius:10px;background:linear-gradient(105deg,#75efd3,#25d8b1);color:#052a23;padding:11px 15px;font-size:11px;font-weight:800;white-space:nowrap}.admin-create-challenge-button:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .admin-admins{max-width:900px}.admin-create-admin-form{display:grid;gap:10px}.admin-create-admin-form label{display:block;margin:0;color:#3b4e64;font-size:11px;font-weight:700}.admin-create-admin-form input{width:100%;display:block;border:1px solid #dce5ed;border-radius:10px;background:white;padding:11px 12px;margin-top:7px;font:500 12px 'DM Sans';color:#15352d}.admin-admin-help{margin:0;color:#779285;font-size:10px;line-height:1.55}.admin-admin-entry{display:flex;align-items:center;gap:11px;min-width:0}.admin-admin-entry-copy{display:grid;gap:3px;min-width:0}.admin-admin-entry-copy strong{font-size:12px}.admin-admin-entry-copy span{font-size:10px;font-weight:500;color:#779285;overflow-wrap:anywhere}.admin-primary-badge{flex:none;border-radius:999px;padding:5px 8px;background:#e5f8e4;color:#3a7b3c;font-size:9px;font-weight:800}
 .admin-participants{max-width:1100px}.admin-participants-search{display:grid;gap:7px;max-width:460px;margin:16px 0 9px;color:#3d5e50;font-size:11px;font-weight:800}.admin-participants-search input{min-height:44px;border:1px solid #d6e9df;border-radius:12px;background:#fbfefc;padding:11px 13px;color:#173d32;font:500 13px 'DM Sans',sans-serif}.admin-participants-search input:focus-visible{outline:none;border-color:#37c7a2;box-shadow:0 0 0 4px #37c7a21c}.admin-participants-list{display:grid;gap:10px;margin-top:14px}.admin-participant-row{display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,2fr);align-items:center;gap:16px;padding:14px;border:1px solid #dcebe2;border-radius:14px;background:#fbfefc}.admin-participant-details{display:grid;gap:4px;min-width:0}.admin-participant-details strong{color:#173d32;font-size:13px}.admin-participant-details span{color:#5d7d6e;font-size:11px;overflow-wrap:anywhere}.admin-participant-details small{color:#829b8f;font-size:10px;line-height:1.45}.admin-participant-edit{display:grid;grid-template-columns:1fr 1fr minmax(120px,.7fr) auto;align-items:end;gap:8px}.admin-participant-edit label{display:grid;gap:5px;color:#52715f;font-size:10px;font-weight:800}.admin-participant-edit input,.admin-participant-edit select{width:100%;min-width:0;min-height:40px;border:1px solid #d6e9df;border-radius:10px;background:white;padding:9px 10px;color:#173d32;font:500 11px 'DM Sans',sans-serif}.admin-participant-edit button{min-height:40px!important;margin:0!important;padding:9px 13px!important;font-size:10px!important}
+.admin-account-heading-actions{display:flex;align-items:center;gap:10px}.admin-account-heading-actions .admin-create-challenge-button{min-height:42px}.admin-account-tools{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:15px 0 8px;border-bottom:1px solid #e0eee6}.admin-account-tools>span{max-width:360px;padding-bottom:9px;color:#789386;font-size:10px;line-height:1.5}.admin-account-tools .admin-participants-search{flex:1;margin:0}.admin-account-form{display:grid;gap:14px;margin:18px 0;padding:19px;border:1px solid #bfe6d3;border-radius:16px;background:radial-gradient(ellipse at 90% 0%,#dcf8ed 0,transparent 42%),linear-gradient(145deg,#fbfefc,#f2faf5);box-shadow:0 12px 28px #06402c0b}.admin-account-form[hidden],.admin-participant-edit[hidden]{display:none!important}.admin-account-form-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.admin-account-form-heading h3{margin:0 0 4px;color:#173d32;font:800 16px 'Manrope'}.admin-account-form-heading p{margin:0;color:#748f82;font-size:11px}.admin-account-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.admin-account-form-grid>label,.admin-participant-edit>label{display:grid;align-content:start;gap:6px;color:#456454;font-size:10px;font-weight:800}.admin-account-form-grid input,.admin-account-form-grid select,.admin-participant-edit input:not([type=file]),.admin-participant-edit select{width:100%;min-width:0;min-height:43px;border:1px solid #d3e8dc;border-radius:11px;background:#fff;padding:10px 12px;color:#173d32;font:500 12px 'DM Sans',sans-serif}.admin-account-form-grid input:focus-visible,.admin-account-form-grid select:focus-visible,.admin-participant-edit input:focus-visible,.admin-participant-edit select:focus-visible{outline:0;border-color:#37c7a2;box-shadow:0 0 0 4px #37c7a21c}.admin-account-form-grid .admin-photo-field input[type=file],.admin-participant-edit input[type=file]{min-height:auto;padding:9px;background:#fff}.admin-photo-field small,.admin-participant-edit label>small{color:#829b8f;font-size:9px;font-weight:500}.admin-account-form-actions{display:flex;justify-content:flex-end;gap:9px}.admin-account-form-actions button{min-height:42px}.admin-participant-row{grid-template-columns:minmax(0,1fr) auto;gap:12px 16px;padding:15px 16px;background:linear-gradient(145deg,#fff,#f8fcf9);box-shadow:0 5px 16px #062b1e07;transition:border-color .18s,box-shadow .18s}.admin-participant-row:hover,.admin-participant-row.is-editing{border-color:#b7e5d0;box-shadow:0 10px 24px #062b1e0c}.admin-participant-details{display:flex;align-items:center;gap:12px}.admin-account-avatar{width:46px;height:46px;flex:none;border:2px solid #e0f5e9;box-shadow:0 3px 8px #0c6b4a12}.admin-account-copy{display:grid;gap:4px;min-width:0}.admin-account-copy strong{color:#173d32;font-size:13px}.admin-account-copy span{color:#5d7d6e;font-size:11px;overflow-wrap:anywhere}.admin-account-copy small{color:#829b8f;font-size:10px;line-height:1.45}.admin-account-actions{display:flex;align-items:center;gap:7px}.admin-account-action{min-height:36px;padding:8px 11px;border:1px solid #d3e8dc;border-radius:10px;background:#fff;color:#087c68;font-size:10px;font-weight:800;cursor:pointer;transition:.16s}.admin-account-action:hover{border-color:#80d2b1;background:#effaf4}.admin-account-action.is-danger{border-color:#f0d4ce;color:#a64b3b}.admin-account-action.is-danger:hover{background:#fff4f1}.admin-account-action:disabled{opacity:.45;cursor:not-allowed}.admin-participant-edit{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:12px;padding:16px;border-top:1px solid #e0eee6;border-radius:12px;background:#f5faf7}.admin-account-edit-heading{display:grid;gap:3px;grid-column:1/-1}.admin-account-edit-heading strong{color:#173d32;font-size:12px}.admin-account-edit-heading small{color:#829b8f;font-size:10px}.admin-account-row-error,.admin-account-form-error{grid-column:1/-1;margin:0}.admin-account-row-error[hidden],.admin-account-form-error[hidden]{display:none!important}.admin-participant-edit .admin-account-form-actions{grid-column:1/-1}.admin-participant-edit .admin-account-form-actions button{min-height:42px!important;margin:0!important;padding:10px 15px!important;font-size:11px!important}
 .accept-challenge-button{border:0;border-radius:9px;background:#078d78;color:#fff;padding:10px 13px;font-size:11px;font-weight:800}.accept-challenge-button:hover{background:#057661}.accept-challenge-button:disabled{opacity:.6;cursor:wait}.challenge-invitation-copy{margin:12px 0!important}
 .social-home{margin:0 0 20px}.social-home[hidden]{display:none}.social-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}.social-feed-column,.social-people-column{min-width:0}.social-feed-card,.social-people-card{padding-bottom:8px}.social-feed-list,.social-people-list{padding:0 20px 12px}.social-person{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 0;border-top:1px solid #e9eff5}.social-person .avatar,.social-post-header .avatar{width:36px;height:36px;font-size:11px}.social-person-info,.social-post-author{min-width:0}.social-person-info strong,.social-post-author strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#19352e}.social-person-info small,.social-post-author small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#829486;font-size:9px;margin-top:4px}.social-follow-button,.social-following-button{border:0;border-radius:8px;background:#078d78;color:white;padding:8px 10px;font-size:10px;font-weight:800}.social-following-button{background:#e7f4ef;color:#527568}.social-follow-button:disabled,.social-following-button:disabled{opacity:.6}.social-post{padding:15px 0;border-top:1px solid #e9eff5}.social-post-header{display:flex;align-items:center;gap:10px}.social-post-metrics{display:flex;gap:14px;color:#556c60;font-size:10px;font-weight:700;margin:12px 0}.social-post-media{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.social-post-media img,.social-post-media video{width:100%;max-height:360px;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#e8f0eb}.social-post-media:has(:only-child){grid-template-columns:minmax(0,1fr)}.social-post-media:has(:only-child) img,.social-post-media:has(:only-child) video{max-height:520px;aspect-ratio:16/10}
 
@@ -168,6 +169,8 @@ body{background:radial-gradient(ellipse at 12% 0%,#0d5346 0,transparent 36%),rad
 @media(max-width:720px){.workspace-tabs{gap:5px;margin:6px 0 13px}.workspace-tab{padding:9px 11px;font-size:11px}}
 @media(max-width:760px){.admin-participant-row{grid-template-columns:1fr;gap:12px}.admin-participant-edit{grid-template-columns:1fr 1fr}.admin-participant-edit label:nth-child(3){grid-column:1/2}.admin-participant-edit button{grid-column:2/3}}
 @media(max-width:420px){.admin-participant-edit{grid-template-columns:1fr}.admin-participant-edit label:nth-child(3),.admin-participant-edit button{grid-column:auto}}
+@media(max-width:760px){.admin-account-tools{align-items:stretch;flex-direction:column;gap:7px}.admin-account-tools>span{max-width:none;padding:0}.admin-account-form-grid{grid-template-columns:1fr}.admin-account-heading-actions{align-items:flex-end}.admin-account-heading-actions .admin-create-challenge-button{padding:10px}.admin-participant-edit{grid-template-columns:1fr 1fr}.admin-account-edit-heading,.admin-account-row-error,.admin-participant-edit .admin-account-form-actions{grid-column:1/-1}}
+@media(max-width:480px){.admin-participant-details{align-items:flex-start}.admin-account-actions{width:100%}.admin-account-action{flex:1}.admin-account-heading-actions{flex-direction:column-reverse;align-items:flex-end}.admin-account-form{padding:14px}.admin-participant-edit{grid-template-columns:1fr}.admin-account-edit-heading,.admin-account-row-error,.admin-participant-edit .admin-account-form-actions{grid-column:auto}.admin-participant-edit .admin-account-form-actions{display:grid;grid-template-columns:1fr 1fr}}
 @media(max-width:900px){.social-layout{grid-template-columns:1fr}.social-people-column{order:-1}.social-people-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}}
 @media(max-width:520px){.social-people-list{grid-template-columns:1fr}.social-feed-list,.social-people-list{padding-left:16px;padding-right:16px}.social-feed-card .card-head,.social-people-card .card-head{padding-left:16px;padding-right:16px}.social-post-media{gap:5px}}
 @media(prefers-reduced-motion:reduce){.profile-settings .workspace-panel,.admin-view .workspace-panel{animation:none}}
@@ -876,4 +879,74 @@ body[data-page="Início"] .welcome p{font-size:13px}
  .activity-dialog .activity-share-card-main p{font-size:10px}
  .activity-dialog .activity-share-card-footer span,.activity-dialog .activity-share-card-footer small{font-size:10px;white-space:normal}
  .profile-settings .create-goal,.profile-settings .cancel-goal,.profile-settings button[type=submit]{min-height:44px;padding:12px 15px;font-size:11px}
+}
+
+/* Account management: compact, scan-friendly directory and touch-ready controls. */
+.admin-participants{max-width:1180px;padding-bottom:22px}
+.admin-participants>.goal-heading{align-items:center;padding-bottom:17px;border-bottom:1px solid #deeee5}
+.admin-participants>.goal-heading h2{margin:5px 0 4px;font:800 21px 'Manrope';letter-spacing:-.45px}
+.admin-participants>.goal-heading p{margin:0;color:#6e8b7c;font-size:11px;line-height:1.5}
+.admin-account-heading-actions .goal-badge{display:grid;place-items:center;min-width:34px;height:34px;border:1px solid #d2efdf;border-radius:11px;background:#eaf8ee;color:#347b4c;font:800 12px 'Manrope'}
+.admin-account-tools{align-items:center;padding:15px 0 13px;border-bottom:1px solid #e4efe8}
+.admin-account-tools .admin-participants-search{max-width:520px;margin:0}
+.admin-account-security-note{display:flex;align-items:flex-start;gap:10px;max-width:390px;padding:10px 12px;border:1px solid #dceee4;border-radius:12px;background:#f7fcf8;color:#18836f}
+.admin-account-security-note>span[aria-hidden]{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:9px;background:#e2f6ed;font-size:15px}
+.admin-account-security-note strong,.admin-account-security-note small{display:block}
+.admin-account-security-note strong{margin:1px 0 3px;color:#315f4e;font-size:10px;font-weight:800}
+.admin-account-security-note small{color:#728e80;font-size:9px;font-weight:500;line-height:1.45}
+.admin-account-form{margin:15px 0 17px;padding:20px;border-color:#c8e9d7;background:radial-gradient(ellipse at 92% 0%,#e2f8ee 0,transparent 42%),linear-gradient(145deg,#fbfefc,#f3faf6);box-shadow:0 10px 26px #0735230c}
+.admin-account-form-heading{align-items:center;padding-bottom:13px;border-bottom:1px solid #e0eee6}
+.admin-account-form-heading .eyebrow{display:block;margin-bottom:5px;font-size:9px;letter-spacing:1.2px}
+.admin-account-form-heading h3{font-size:18px;letter-spacing:-.35px}
+.admin-account-form-heading p{font-size:11px;line-height:1.5}
+.admin-account-form-grid{gap:13px 15px;padding-top:2px}
+.admin-account-form-grid>label,.admin-participant-edit>label{font-size:10px;letter-spacing:.05px}
+.admin-account-form-grid input,.admin-account-form-grid select,.admin-participant-edit input:not([type=file]),.admin-participant-edit select{min-height:45px;border-color:#d6e8dd;border-radius:11px;background:#fff;transition:border-color .16s,box-shadow .16s}
+.admin-account-form-grid input:hover,.admin-account-form-grid select:hover,.admin-participant-edit input:not([type=file]):hover,.admin-participant-edit select:hover{border-color:#a7d8bf}
+.admin-account-form-grid input:focus-visible,.admin-account-form-grid select:focus-visible,.admin-participant-edit input:focus-visible,.admin-participant-edit select:focus-visible{outline:0;border-color:#23b995;box-shadow:0 0 0 4px #2ac69d1c}
+.admin-account-form-actions{padding-top:3px}
+.admin-account-form-actions .primary,.admin-account-form-actions .cancel-goal{min-height:44px;padding:11px 17px;font-size:11px;font-weight:800}
+.admin-participants-list{gap:9px;margin-top:15px}
+.admin-participant-row{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 18px;padding:15px 17px;border-color:#deeee5;border-radius:15px;background:linear-gradient(120deg,#fff 0%,#f9fcfa 100%);box-shadow:0 4px 13px #052a1d08}
+.admin-participant-details{gap:13px;min-width:0}
+.admin-account-avatar{width:50px;height:50px;border:2px solid #e0f3e9;box-shadow:0 3px 10px #0c6b4a14}
+.admin-account-copy{gap:4px}
+.admin-account-copy strong{font:800 13px 'Manrope';letter-spacing:-.1px}
+.admin-account-copy>span{font-size:11px;line-height:1.4}
+.admin-account-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:3px}
+.admin-account-meta-item,.admin-account-role{display:inline-flex;align-items:center;min-height:22px;padding:3px 7px;border:1px solid #e0eee6;border-radius:7px;background:#f5faf7;color:#698477;font-size:9px;line-height:1.25}
+.admin-account-role{border-color:#cfeadd;background:#eaf7ef;color:#34754c;font-weight:800}
+.admin-account-role.is-admin{border-color:#cce9e3;background:#e6f7f3;color:#147761}
+.admin-account-actions{gap:7px}
+.admin-participant-edit .password-visibility-toggle{min-height:36px!important;width:36px;padding:0!important}
+.admin-participant-edit .password-visibility-toggle svg{width:18px;height:18px}
+.admin-account-action{min-height:40px;padding:9px 12px;border-color:#d7e9df;border-radius:10px;font-size:10px;white-space:nowrap}
+.admin-account-action:focus-visible,.admin-create-challenge-button:focus-visible{outline:3px solid #40c9a5;outline-offset:2px}
+.admin-participant-edit{gap:13px;padding:17px;border:1px solid #e1eee7;border-radius:12px;background:#f6faf7}
+.admin-account-edit-heading{padding-bottom:2px}
+.admin-account-edit-heading strong{font:800 13px 'Manrope'}
+.admin-account-edit-heading small{font-size:10px;line-height:1.45}
+.admin-participant-edit .admin-account-form-actions .primary,.admin-participant-edit .admin-account-form-actions .cancel-goal{min-height:44px!important}
+@media(max-width:760px){
+ .admin-participants>.goal-heading{align-items:flex-start}
+ .admin-account-tools{align-items:stretch;gap:10px}
+ .admin-account-tools .admin-participants-search{max-width:none}
+ .admin-account-security-note{max-width:none}
+ .admin-participant-row{grid-template-columns:minmax(0,1fr);gap:11px;padding:14px}
+ .admin-account-actions{justify-content:flex-start;width:auto}
+ .admin-account-action{min-width:104px;min-height:44px}
+}
+@media(max-width:480px){
+ .admin-participants{padding:17px 15px 19px}
+ .admin-participants>.goal-heading{gap:10px;padding-left:0;padding-right:0}
+ .admin-participants>.goal-heading h2{font-size:19px}
+ .admin-account-heading-actions{flex-direction:row;align-items:center}
+ .admin-account-heading-actions .admin-create-challenge-button{min-height:44px;padding:10px 12px}
+ .admin-account-form{padding:14px}
+ .admin-account-form-heading h3{font-size:16px}
+ .admin-account-form-actions{display:grid;grid-template-columns:1fr 1fr}
+ .admin-account-form-actions button{width:100%}
+ .admin-account-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+ .admin-account-action{min-width:0;width:100%;padding:9px 8px}
+ .admin-account-copy strong{font-size:12px;overflow-wrap:anywhere}
 }

@@ -1000,6 +1000,51 @@ function renderAdminAdmins(admins = []) {
 
 let adminParticipants = [];
 let adminParticipantTeams = [];
+let adminParticipantCompanies = [];
+
+function accountField(labelText, name, value = '', type = 'text', options = {}) {
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  const input = type === 'select' ? document.createElement('select') : document.createElement('input');
+  input.name = name;
+  if (type !== 'select') input.type = type;
+  if (value !== undefined && value !== null) input.value = String(value);
+  if (options.required) input.required = true;
+  if (options.minLength) input.minLength = options.minLength;
+  if (options.maxLength) input.maxLength = options.maxLength;
+  if (options.autocomplete) input.autocomplete = options.autocomplete;
+  if (options.placeholder) input.placeholder = options.placeholder;
+  label.append(input);
+  return { label, input };
+}
+
+function fillAdminCompanyOptions(select, selectedCompanyId = '') {
+  select.replaceChildren(new Option('Sem grupo', ''));
+  adminParticipantCompanies.forEach((company) => select.add(new Option(company.name, company.id)));
+  select.value = selectedCompanyId ? String(selectedCompanyId) : '';
+}
+
+function fillAdminTeamOptions(select, companyId, selectedTeamId = '') {
+  select.replaceChildren(new Option('Sem equipe', ''));
+  const teams = adminParticipantTeams.filter((team) => companyId && Number(team.companyId) === Number(companyId));
+  teams.forEach((team) => select.add(new Option(team.name, team.id)));
+  select.disabled = !companyId;
+  select.value = selectedTeamId ? String(selectedTeamId) : '';
+}
+
+async function adminPhotoData(fileInput) {
+  const file = fileInput?.files?.[0];
+  if (!file) return undefined;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+    throw new Error('Escolha uma foto JPG, PNG ou WebP de até 5 MB.');
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Não foi possível ler essa foto.'));
+    reader.readAsDataURL(file);
+  });
+}
 
 function renderAdminParticipants(query = '') {
   const list = document.getElementById('adminParticipantsList');
@@ -1022,41 +1067,106 @@ function renderAdminParticipants(query = '') {
     row.dataset.participantId = String(person.id);
     const details = document.createElement('div');
     details.className = 'admin-participant-details';
+    const avatar = document.createElement('span');
+    avatar.className = 'avatar admin-account-avatar';
+    setAvatar(avatar, person.name, person.profilePhoto);
+    const copy = document.createElement('div');
+    copy.className = 'admin-account-copy';
     const name = document.createElement('strong');
     name.textContent = person.name;
     const email = document.createElement('span');
     email.textContent = person.email;
-    const meta = document.createElement('small');
+    const meta = document.createElement('div');
+    meta.className = 'admin-account-meta';
     const joinedDate = new Date(`${person.createdAt}Z`);
-    meta.textContent = `Cadastro: ${Number.isNaN(joinedDate.getTime()) ? 'data indisponível' : joinedDate.toLocaleDateString('pt-BR')} · Grupo: ${person.companyName || 'Sem grupo'} · ${person.isAdmin ? 'Administrador' : 'Participante'} · ${person.showInRanking ? 'No ranking' : 'Fora do ranking'}`;
-    details.append(name, email, meta);
+    const metaItems = [
+      `Cadastro ${Number.isNaN(joinedDate.getTime()) ? 'sem data' : joinedDate.toLocaleDateString('pt-BR')}`,
+      person.companyName || 'Sem grupo',
+      person.teamName || 'Sem equipe',
+      person.isAdmin ? 'Administrador' : 'Participante',
+      person.showInRanking ? 'No ranking' : 'Fora do ranking',
+    ];
+    metaItems.forEach((text, index) => {
+      const item = document.createElement('span');
+      item.className = index === 3 ? `admin-account-role${person.isAdmin ? ' is-admin' : ''}` : 'admin-account-meta-item';
+      item.textContent = text;
+      meta.append(item);
+    });
+    copy.append(name, email, meta);
+    details.append(avatar, copy);
+    const actions = document.createElement('div');
+    actions.className = 'admin-account-actions';
+    const editButton = document.createElement('button');
+    editButton.type = 'button'; editButton.className = 'admin-account-action'; editButton.textContent = 'Editar';
+    editButton.setAttribute('aria-expanded', 'false');
+    editButton.addEventListener('click', () => {
+      form.hidden = !form.hidden;
+      row.classList.toggle('is-editing', !form.hidden);
+      editButton.setAttribute('aria-expanded', String(!form.hidden));
+      editButton.textContent = form.hidden ? 'Editar' : 'Fechar edição';
+      if (!form.hidden) form.elements.name.focus();
+    });
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button'; deleteButton.className = 'admin-account-action is-danger'; deleteButton.textContent = 'Excluir';
+    deleteButton.setAttribute('aria-label', `Excluir cadastro de ${person.name}`);
+    deleteButton.disabled = Boolean(person.isAdmin);
+    deleteButton.title = person.isAdmin ? 'Contas com acesso administrativo não podem ser excluídas por esta tela.' : 'Excluir conta e dados associados';
+    deleteButton.addEventListener('click', async () => {
+      if (!window.confirm(`Excluir a conta de ${person.name} (${person.email})? As atividades, fotos e demais dados vinculados também serão removidos permanentemente.`)) return;
+      deleteButton.disabled = true;
+      try {
+        const result = await api(`/admin/participants/${person.id}`, { method: 'DELETE' });
+        adminParticipants = result.accounts || [];
+        renderAdminParticipants(document.getElementById('adminParticipantsSearch').value);
+        showToast('Conta excluída.');
+      } catch (error) { showToast(error.message); deleteButton.disabled = false; }
+    });
+    actions.append(editButton, deleteButton);
     const form = document.createElement('form');
     form.className = 'admin-participant-edit premium-form';
     form.dataset.participantId = String(person.id);
-    const nameLabel = document.createElement('label');
-    nameLabel.textContent = 'Nome';
-    const nameInput = document.createElement('input');
-    nameInput.name = 'name'; nameInput.required = true; nameInput.minLength = 2; nameInput.maxLength = 60; nameInput.value = person.name;
-    nameLabel.append(nameInput);
-    const emailLabel = document.createElement('label');
-    emailLabel.textContent = 'E-mail';
-    const emailInput = document.createElement('input');
-    emailInput.name = 'email'; emailInput.type = 'email'; emailInput.required = true; emailInput.maxLength = 254; emailInput.value = person.email;
-    emailLabel.append(emailInput);
-    const teamLabel = document.createElement('label');
-    teamLabel.textContent = 'Equipe';
-    const teamSelect = document.createElement('select');
-    teamSelect.name = 'teamId';
-    teamSelect.add(new Option('Sem equipe', ''));
-    adminParticipantTeams.filter((team) => person.companyId && Number(team.companyId) === Number(person.companyId)).forEach((team) => teamSelect.add(new Option(team.name, team.id)));
-    teamSelect.value = person.teamId ? String(person.teamId) : '';
-    teamLabel.append(teamSelect);
+    form.hidden = true;
+    const formHeading = document.createElement('div'); formHeading.className = 'admin-account-edit-heading';
+    const heading = document.createElement('strong'); heading.textContent = 'Editar dados da conta';
+    const hint = document.createElement('small'); hint.textContent = 'Deixe a nova senha em branco para manter a atual.';
+    formHeading.append(heading, hint);
+    const { label: nameLabel, input: nameInput } = accountField('Nome completo', 'name', person.name, 'text', { required: true, minLength: 2, maxLength: 60, autocomplete: 'name' });
+    nameInput.id = `adminAccount${person.id}Name`; nameInput.defaultValue = person.name;
+    const { label: emailLabel, input: emailInput } = accountField('E-mail', 'email', person.email, 'email', { required: true, maxLength: 254, autocomplete: 'email' });
+    emailInput.id = `adminAccount${person.id}Email`; emailInput.defaultValue = person.email;
+    const { label: companyLabel, input: companySelect } = accountField('Grupo', 'companyId', person.companyId || '', 'select');
+    fillAdminCompanyOptions(companySelect, person.companyId);
+    companySelect.id = `adminAccount${person.id}Company`;
+    const { label: teamLabel, input: teamSelect } = accountField('Equipe', 'teamId', person.teamId || '', 'select');
+    fillAdminTeamOptions(teamSelect, person.companyId, person.teamId);
+    teamSelect.id = `adminAccount${person.id}Team`;
+    [...companySelect.options].forEach((option) => { option.defaultSelected = option.selected; });
+    [...teamSelect.options].forEach((option) => { option.defaultSelected = option.selected; });
+    companySelect.addEventListener('change', () => fillAdminTeamOptions(teamSelect, companySelect.value));
+    const { label: passwordLabel, input: passwordInput } = accountField('Nova senha (opcional)', 'password', '', 'password', { minLength: 8, maxLength: 128, autocomplete: 'new-password', placeholder: 'Mínimo de 8 caracteres' });
+    passwordInput.id = `adminAccount${person.id}Password`;
+    const { label: photoLabel, input: photoInput } = accountField('Alterar foto de perfil', 'photo', '', 'file');
+    photoInput.id = `adminAccount${person.id}Photo`;
+    photoInput.accept = 'image/jpeg,image/png,image/webp';
+    const photoHelp = document.createElement('small'); photoHelp.textContent = 'JPG, PNG ou WebP · até 5 MB'; photoLabel.append(photoHelp);
+    const error = document.createElement('p'); error.className = 'admin-account-row-error auth-error'; error.setAttribute('role', 'alert'); error.hidden = true;
     const save = document.createElement('button');
-    save.className = 'create-goal'; save.type = 'submit'; save.textContent = 'Salvar';
-    form.append(nameLabel, emailLabel, teamLabel, save);
-    row.append(details, form);
+    save.className = 'primary'; save.type = 'submit'; save.textContent = 'Salvar alterações';
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'cancel-goal'; cancel.textContent = 'Cancelar';
+    cancel.addEventListener('click', () => {
+      form.reset();
+      fillAdminTeamOptions(teamSelect, person.companyId, person.teamId);
+      form.hidden = true;
+      row.classList.remove('is-editing');
+      editButton.setAttribute('aria-expanded', 'false');
+      editButton.textContent = 'Editar';
+    });
+    const formActions = document.createElement('div'); formActions.className = 'admin-account-form-actions'; formActions.append(cancel, save);
+    form.append(formHeading, nameLabel, emailLabel, companyLabel, teamLabel, passwordLabel, photoLabel, error, formActions);
+    row.append(details, actions, form);
     list.append(row);
   });
+  setupPasswordVisibility(list);
 }
 
 async function loadAdminParticipants() {
@@ -1065,8 +1175,11 @@ async function loadAdminParticipants() {
   list.innerHTML = '<p class="activity-empty">Carregando contas…</p>';
   try {
     const result = await api('/admin/participants');
-    adminParticipants = result.participants || [];
+    adminParticipants = result.accounts || [];
+    adminParticipantCompanies = result.companies || [];
     adminParticipantTeams = result.teams || [];
+    fillAdminCompanyOptions(adminCreateParticipantForm.elements.companyId);
+    fillAdminTeamOptions(adminCreateParticipantForm.elements.teamId, adminCreateParticipantForm.elements.companyId.value);
     renderAdminParticipants(document.getElementById('adminParticipantsSearch').value);
   } catch (error) {
     list.innerHTML = '';
@@ -1216,22 +1329,61 @@ document.querySelectorAll('[data-profile-tab]').forEach((tab) => tab.addEventLis
 document.querySelectorAll('[data-admin-tab]').forEach((tab) => tab.addEventListener('click', () => setAdminTab(tab.dataset.adminTab)));
 document.querySelector('[data-admin-tab="participants"]').addEventListener('click', loadAdminParticipants);
 document.getElementById('adminParticipantsSearch').addEventListener('input', (event) => renderAdminParticipants(event.currentTarget.value));
+const adminCreateParticipantForm = document.getElementById('adminCreateParticipantForm');
+document.getElementById('adminShowCreateAccount').addEventListener('click', () => {
+  adminCreateParticipantForm.hidden = !adminCreateParticipantForm.hidden;
+  document.getElementById('adminShowCreateAccount').setAttribute('aria-expanded', String(!adminCreateParticipantForm.hidden));
+  if (!adminCreateParticipantForm.hidden) adminCreateParticipantForm.elements.name.focus();
+});
+function closeAdminCreateAccount() { adminCreateParticipantForm.reset(); fillAdminTeamOptions(adminCreateParticipantForm.elements.teamId, ''); adminCreateParticipantForm.hidden = true; document.getElementById('adminShowCreateAccount').setAttribute('aria-expanded', 'false'); }
+document.getElementById('adminCancelCreateAccount').addEventListener('click', closeAdminCreateAccount);
+document.getElementById('adminCancelCreateAccountFooter').addEventListener('click', closeAdminCreateAccount);
+adminCreateParticipantForm.elements.companyId.addEventListener('change', () => fillAdminTeamOptions(adminCreateParticipantForm.elements.teamId, adminCreateParticipantForm.elements.companyId.value));
+adminCreateParticipantForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submit = form.querySelector('button[type="submit"]');
+  const error = form.querySelector('.admin-account-form-error');
+  const fields = new FormData(form);
+  error.hidden = true; submit.disabled = true;
+  try {
+    const profilePhotoData = await adminPhotoData(form.elements.photo);
+    const result = await api('/admin/accounts', { method: 'POST', body: JSON.stringify({
+      name: fields.get('name'), email: fields.get('email'), password: fields.get('password'),
+      companyId: fields.get('companyId') || null, teamId: fields.get('teamId') || null, profilePhotoData,
+    }) });
+    adminParticipants = result.accounts || [];
+    adminParticipantCompanies = result.companies || [];
+    adminParticipantTeams = result.teams || [];
+    renderAdminParticipants(document.getElementById('adminParticipantsSearch').value);
+    closeAdminCreateAccount();
+    await loadAccountData();
+    showToast('Cadastro criado com sucesso.');
+  } catch (requestError) {
+    error.textContent = requestError.message; error.hidden = false;
+  } finally { submit.disabled = false; }
+});
 document.getElementById('adminParticipantsList').addEventListener('submit', async (event) => {
   if (!event.target.matches('.admin-participant-edit')) return;
   event.preventDefault();
   const form = event.target;
   const button = form.querySelector('button[type="submit"]');
-  const error = document.getElementById('adminParticipantEditError');
+  const error = form.querySelector('.admin-account-row-error');
   const fields = new FormData(form);
   error.hidden = true;
   button.disabled = true;
   try {
+    const profilePhotoData = await adminPhotoData(form.elements.photo);
     const result = await api(`/admin/participants/${form.dataset.participantId}`, { method: 'PUT', body: JSON.stringify({
-      name: fields.get('name'), email: fields.get('email'), teamId: fields.get('teamId') || null,
+      name: fields.get('name'), email: fields.get('email'), companyId: fields.get('companyId') || null,
+      teamId: fields.get('teamId') || null, password: fields.get('password'), profilePhotoData,
     }) });
-    adminParticipants = result.participants || [];
+    adminParticipants = result.accounts || [];
+    adminParticipantCompanies = result.companies || [];
+    adminParticipantTeams = result.teams || [];
     renderAdminParticipants(document.getElementById('adminParticipantsSearch').value);
-    showToast('Cadastro do participante atualizado.');
+    await loadAccountData();
+    showToast('Cadastro atualizado.');
   } catch (requestError) {
     error.textContent = requestError.message;
     error.hidden = false;
