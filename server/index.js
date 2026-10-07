@@ -496,6 +496,68 @@ function findCommunityPostForViewer(postId, userId) {
   return viewer.companyId && post.companyId === viewer.companyId ? { post, viewer } : null;
 }
 
+function findSharedActivityForViewer(activityId, userId) {
+  const viewer = publicUser(userId);
+  if (!viewer?.companyId) return null;
+  const activity = statements.sharedActivityDetail.get({ activityId, companyId: viewer.companyId, viewerId: viewer.id });
+  return activity ? { activity, viewer } : null;
+}
+
+function activityCommentsFor(activityId) {
+  return statements.activityCommentList.all(activityId).map((comment) => ({
+    ...comment,
+    profilePhoto: comment.profilePhoto ? `/api/profile-photos/${comment.profilePhoto}` : null,
+    mentions: statements.activityCommentMentions.all(comment.id),
+  }));
+}
+
+app.get('/api/activities/:id/shared', authRequired, (req, res) => {
+  const result = findSharedActivityForViewer(req.params.id, req.session.userId);
+  if (!result) return res.status(404).json({ error: 'Atividade não encontrada ou indisponível.' });
+  const { activity, viewer } = result;
+  const fullRoute = JSON.parse(activity.matchedRouteJson || '[]').length ? JSON.parse(activity.matchedRouteJson || '[]') : JSON.parse(activity.routeJson || '[]');
+  const route = activity.userId === viewer.id ? fullRoute : activity.shareRoute ? maskSharedRoute(fullRoute) : [];
+  const media = JSON.parse(activity.mediaJson || '[]').slice(0, 4);
+  res.json({
+    activity: {
+      id: activity.id,
+      mode: activity.mode,
+      startedAt: activity.startedAt,
+      durationSeconds: activity.durationSeconds,
+      distanceKm: activity.distanceKm,
+      averageHeartRate: activity.averageHeartRate,
+      maxHeartRate: activity.maxHeartRate,
+      userId: activity.userId,
+      name: activity.name,
+      profilePhoto: activity.profilePhoto && activity.shareProfilePhoto ? `/api/profile-photos/${activity.profilePhoto}` : null,
+      route,
+      media,
+    },
+    mentionTargets: statements.activityMentionTargets.all({ companyId: viewer.companyId, ownerId: activity.userId }),
+  });
+});
+
+app.get('/api/activities/:id/comments', authRequired, (req, res) => {
+  const result = findSharedActivityForViewer(req.params.id, req.session.userId);
+  if (!result) return res.status(404).json({ error: 'Atividade não encontrada ou indisponível.' });
+  res.json({ comments: activityCommentsFor(req.params.id) });
+});
+
+app.post('/api/activities/:id/comments', authRequired, (req, res) => {
+  const result = findSharedActivityForViewer(req.params.id, req.session.userId);
+  if (!result) return res.status(404).json({ error: 'Atividade não encontrada ou indisponível.' });
+  const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+  if (!body || body.length > 500) return res.status(400).json({ error: 'O comentário deve ter entre 1 e 500 caracteres.' });
+  const allowedTargets = new Set(statements.activityMentionTargets.all({ companyId: result.viewer.companyId, ownerId: result.activity.userId }).map((person) => person.id));
+  const mentionIds = [...new Set((Array.isArray(req.body?.mentionIds) ? req.body.mentionIds : []).map(Number).filter((id) => Number.isInteger(id) && allowedTargets.has(id)))].slice(0, 20);
+  const saveComment = database.transaction(() => {
+    const info = statements.createActivityComment.run(req.params.id, result.viewer.id, body);
+    mentionIds.forEach((userId) => statements.createActivityCommentMention.run(info.lastInsertRowid, userId));
+  });
+  saveComment();
+  res.status(201).json({ comments: activityCommentsFor(req.params.id) });
+});
+
 app.get('/api/communities', authRequired, (req, res) => {
   const query = typeof req.query?.q === 'string' ? req.query.q.trim().slice(0, 80) : '';
   const communities = query

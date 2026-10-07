@@ -123,6 +123,18 @@ database.exec(`
     body TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS activity_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS activity_comment_mentions (
+    comment_id INTEGER NOT NULL REFERENCES activity_comments(id) ON DELETE CASCADE,
+    mentioned_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (comment_id, mentioned_user_id)
+  );
   CREATE TABLE IF NOT EXISTS community_reactions (
     post_id INTEGER NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -229,6 +241,12 @@ export const statements = {
   activityFeed: database.prepare("SELECT COALESCE(a.activity_type, a.mode) AS mode, a.started_at AS startedAt, a.duration_seconds AS durationSeconds, a.distance_km AS distanceKm, u.name FROM activities a JOIN users u ON u.id = a.user_id WHERE u.company_id = ? AND u.share_activities = 1 ORDER BY a.started_at DESC LIMIT 10"),
   campaignPeople: database.prepare("SELECT u.id, u.name, u.team_id AS teamId, t.name AS teamName, u.profile_photo AS profilePhoto, u.share_profile_photo AS shareProfilePhoto, u.share_activities AS shareActivities, (SELECT COUNT(*) FROM follows f WHERE f.follower_id = @viewerId AND f.followed_id = u.id) AS isFollowing, (SELECT COUNT(*) FROM activities a WHERE a.user_id = u.id AND u.share_activities = 1) AS activityCount FROM users u LEFT JOIN teams t ON t.id = u.team_id WHERE u.company_id = @companyId AND u.id <> @viewerId ORDER BY isFollowing DESC, u.name LIMIT 100"),
   sharedActivityFeed: database.prepare("SELECT a.id, COALESCE(a.activity_type, a.mode) AS mode, a.started_at AS startedAt, a.duration_seconds AS durationSeconds, a.distance_km AS distanceKm, a.media_json AS mediaJson, u.id AS userId, u.name, u.profile_photo AS profilePhoto, u.share_profile_photo AS shareProfilePhoto, t.name AS teamName FROM activities a JOIN users u ON u.id = a.user_id LEFT JOIN teams t ON t.id = u.team_id WHERE u.company_id = @companyId AND u.share_activities = 1 AND (u.id = @viewerId OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = @viewerId AND f.followed_id = u.id)) ORDER BY a.started_at DESC LIMIT 50"),
+  sharedActivityDetail: database.prepare("SELECT a.id, COALESCE(a.activity_type, a.mode) AS mode, a.started_at AS startedAt, a.duration_seconds AS durationSeconds, a.distance_km AS distanceKm, a.average_heart_rate AS averageHeartRate, a.max_heart_rate AS maxHeartRate, a.route_json AS routeJson, a.matched_route_json AS matchedRouteJson, a.share_route AS shareRoute, a.media_json AS mediaJson, u.id AS userId, u.name, u.profile_photo AS profilePhoto, u.share_profile_photo AS shareProfilePhoto, u.company_id AS companyId, u.share_activities AS shareActivities, t.name AS teamName FROM activities a JOIN users u ON u.id = a.user_id LEFT JOIN teams t ON t.id = u.team_id WHERE a.id = @activityId AND u.company_id = @companyId AND (u.id = @viewerId OR (u.share_activities = 1 AND EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = @viewerId AND f.followed_id = u.id)))"),
+  activityCommentList: database.prepare("SELECT c.id, c.body, c.created_at AS createdAt, u.id AS userId, u.name, CASE WHEN u.share_profile_photo = 1 THEN u.profile_photo ELSE NULL END AS profilePhoto FROM activity_comments c JOIN users u ON u.id = c.user_id WHERE c.activity_id = ? ORDER BY c.created_at, c.id LIMIT 100"),
+  activityCommentMentions: database.prepare("SELECT u.id, u.name FROM activity_comment_mentions m JOIN users u ON u.id = m.mentioned_user_id WHERE m.comment_id = ? ORDER BY u.name"),
+  createActivityComment: database.prepare('INSERT INTO activity_comments (activity_id, user_id, body) VALUES (?, ?, ?)'),
+  createActivityCommentMention: database.prepare('INSERT OR IGNORE INTO activity_comment_mentions (comment_id, mentioned_user_id) VALUES (?, ?)'),
+  activityMentionTargets: database.prepare("SELECT u.id, u.name FROM users u WHERE u.company_id = @companyId AND (u.id = @ownerId OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = u.id AND f.followed_id = @ownerId)) ORDER BY u.name"),
   communityPosts: database.prepare("SELECT p.id, p.body, p.media_json AS mediaJson, p.created_at AS createdAt, u.id AS userId, u.name, CASE WHEN u.share_profile_photo = 1 THEN u.profile_photo ELSE NULL END AS profilePhoto, (SELECT COUNT(*) FROM community_reactions r WHERE r.post_id = p.id) AS reactionCount, EXISTS(SELECT 1 FROM community_reactions r WHERE r.post_id = p.id AND r.user_id = @viewerId) AS reacted, (SELECT COUNT(*) FROM community_comments c WHERE c.post_id = p.id) AS commentCount FROM community_posts p JOIN users u ON u.id = p.user_id WHERE (u.company_id = @companyId AND p.community_id IS NULL) OR EXISTS (SELECT 1 FROM community_members m WHERE m.community_id = p.community_id AND m.user_id = @viewerId) ORDER BY p.created_at DESC, p.id DESC LIMIT 50"),
   createCommunityPost: database.prepare('INSERT INTO community_posts (user_id, community_id, body, media_json) VALUES (?, ?, ?, ?)'),
   communityPostById: database.prepare('SELECT p.id, p.user_id AS userId, p.community_id AS communityId, u.company_id AS companyId FROM community_posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?'),

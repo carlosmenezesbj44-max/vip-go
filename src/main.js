@@ -20,6 +20,9 @@ let activityViewDistanceLayer;
 let activityViewMarker;
 let communityPhotoFiles = [];
 let communityCommentState = new Map();
+let activityCommentTargets = [];
+let selectedActivityMentions = new Map();
+let activeCommentActivityId = null;
 let activeCommunityId = null;
 let communityDirectory = [];
 let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -614,7 +617,15 @@ function renderCommunityCarousel(posts = [], activities = []) {
     track.append(empty); return;
   }
   slides.forEach((item) => {
-    const card = document.createElement('article'); card.className = 'community-carousel-slide';
+    const card = document.createElement('article'); card.className = `community-carousel-slide${item.kind === 'activity' ? ' is-openable' : ''}`;
+    if (item.kind === 'activity') {
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `Ver atividade de ${item.name} e comentar`);
+      const open = () => openSharedActivityView(item);
+      card.addEventListener('click', (event) => { if (!event.target.closest('button, a')) open(); });
+      card.addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && event.target === card) { event.preventDefault(); open(); } });
+    }
     const head = document.createElement('div'); head.className = 'community-carousel-author';
     const avatar = document.createElement('span'); avatar.className = 'avatar'; setAvatar(avatar, item.name, item.profilePhoto);
     const info = document.createElement('div'); const name = document.createElement('strong'); name.textContent = item.name;
@@ -626,8 +637,13 @@ function renderCommunityCarousel(posts = [], activities = []) {
       const media = document.createElement('div'); media.className = 'community-carousel-media';
       const image = document.createElement('img'); image.src = mediaItems[0].url; image.alt = `Publicação de ${item.name}`; image.loading = 'lazy'; media.append(image); card.append(media);
     }
-    const link = document.createElement('button'); link.type = 'button'; link.className = 'community-slide-link'; link.textContent = item.kind === 'post' ? `👏 ${item.reactionCount} · 💬 ${item.commentCount}` : 'Ver na comunidade →';
-    link.addEventListener('click', () => setPage('Comunidade')); card.append(link); track.append(card);
+    if (item.kind === 'activity') {
+      const action = document.createElement('span'); action.className = 'community-slide-link'; action.textContent = 'Ver atividade · comentar →'; card.append(action);
+    } else {
+      const link = document.createElement('button'); link.type = 'button'; link.className = 'community-slide-link'; link.textContent = `👏 ${item.reactionCount} · 💬 ${item.commentCount}`;
+      link.addEventListener('click', () => setPage('Comunidade')); card.append(link);
+    }
+    track.append(card);
   });
 }
 
@@ -1535,8 +1551,94 @@ function openActivityView(activity) {
     media.append(element);
   });
   document.getElementById('activityViewMediaSection').hidden = media.childElementCount === 0;
+  document.getElementById('activityViewCommentsSection').hidden = true;
+  document.getElementById('activityViewComments').replaceChildren();
+  document.getElementById('activityViewCommentCount').textContent = '0 comentários';
+  document.getElementById('activityViewCommentInput').value = '';
+  document.getElementById('activityMentionSuggestions').hidden = true;
+  activityCommentTargets = [];
+  selectedActivityMentions.clear();
+  activeCommentActivityId = null;
   activityViewDialog.showModal();
 }
+
+function renderActivityComments(comments = []) {
+  const list = document.getElementById('activityViewComments');
+  list.replaceChildren();
+  document.getElementById('activityViewCommentCount').textContent = `${comments.length} ${comments.length === 1 ? 'comentário' : 'comentários'}`;
+  comments.forEach((comment) => {
+    const row = document.createElement('div'); row.className = 'activity-view-comment';
+    const avatar = document.createElement('span'); avatar.className = 'avatar'; avatar.style.width = '32px'; avatar.style.height = '32px'; setAvatar(avatar, comment.name, comment.profilePhoto);
+    const copy = document.createElement('div'); copy.className = 'activity-view-comment-copy';
+    const author = document.createElement('strong'); author.textContent = comment.name;
+    const body = document.createElement('p');
+    let remaining = comment.body;
+    const tags = (comment.mentions || []).map((person) => `@${person.name}`).sort((a, b) => b.length - a.length);
+    while (remaining) {
+      const match = tags.map((tag) => ({ tag, index: remaining.indexOf(tag) })).filter((entry) => entry.index >= 0).sort((a, b) => a.index - b.index)[0];
+      if (!match) { body.append(document.createTextNode(remaining)); break; }
+      if (match.index) body.append(document.createTextNode(remaining.slice(0, match.index)));
+      const mention = document.createElement('span'); mention.className = 'activity-comment-mention'; mention.textContent = match.tag; body.append(mention);
+      remaining = remaining.slice(match.index + match.tag.length);
+    }
+    copy.append(author, body); row.append(avatar, copy); list.append(row);
+  });
+}
+
+async function openSharedActivityView(item) {
+  try {
+    const result = await api(`/activities/${encodeURIComponent(item.id)}/shared`);
+    openActivityView({ ...result.activity, activityType: result.activity.mode });
+    activeCommentActivityId = result.activity.id;
+    activityCommentTargets = result.mentionTargets || [];
+    document.getElementById('activityViewCommentsSection').hidden = false;
+    const comments = await api(`/activities/${encodeURIComponent(activeCommentActivityId)}/comments`);
+    renderActivityComments(comments.comments);
+  } catch (error) { showToast(error.message); }
+}
+
+const activityCommentInput = document.getElementById('activityViewCommentInput');
+const activityMentionSuggestions = document.getElementById('activityMentionSuggestions');
+activityCommentInput.addEventListener('input', () => {
+  const cursor = activityCommentInput.selectionStart;
+  const at = activityCommentInput.value.lastIndexOf('@', cursor - 1);
+  const previous = at > 0 ? activityCommentInput.value[at - 1] : ' ';
+  const query = at >= 0 ? activityCommentInput.value.slice(at + 1, cursor) : '';
+  if (at < 0 || !/\s/.test(previous)) { activityMentionSuggestions.hidden = true; return; }
+  const matches = activityCommentTargets.filter((person) => person.name.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))).slice(0, 6);
+  activityMentionSuggestions.replaceChildren();
+  matches.forEach((person) => {
+    const option = document.createElement('button'); option.type = 'button'; option.className = 'activity-mention-option'; option.setAttribute('role', 'option'); option.textContent = person.name;
+    option.addEventListener('click', () => {
+      const value = activityCommentInput.value;
+      const end = value.indexOf(' ', cursor);
+      const replaceEnd = end < 0 ? cursor : end;
+      activityCommentInput.value = `${value.slice(0, at)}@${person.name} ${value.slice(replaceEnd).trimStart()}`;
+      selectedActivityMentions.set(person.id, person.name);
+      activityMentionSuggestions.hidden = true;
+      activityCommentInput.focus();
+    });
+    activityMentionSuggestions.append(option);
+  });
+  activityMentionSuggestions.hidden = matches.length === 0;
+});
+
+document.getElementById('activityViewCommentForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!activeCommentActivityId) return;
+  const submit = event.currentTarget.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  try {
+    const body = activityCommentInput.value.trim();
+    const mentionIds = [...selectedActivityMentions.entries()].filter(([, name]) => body.includes(`@${name}`)).map(([id]) => id);
+    const result = await api(`/activities/${encodeURIComponent(activeCommentActivityId)}/comments`, { method: 'POST', body: JSON.stringify({ body, mentionIds }) });
+    activityCommentInput.value = '';
+    selectedActivityMentions.clear();
+    activityMentionSuggestions.hidden = true;
+    renderActivityComments(result.comments);
+  } catch (error) { showToast(error.message); }
+  finally { submit.disabled = false; }
+});
 const activityDialog = document.getElementById('activityDialog');
 const activityForm = document.getElementById('activityForm');
 function updateActivityFields() {
